@@ -11,6 +11,7 @@ const LoginPage = () => {
         email: '', password: ''
     })
 
+
     const handleLogin = (e) => {
         const { name, value } = e.target
         setLoginData({ ...loginData, [name]: value })
@@ -28,7 +29,7 @@ const LoginPage = () => {
                 console.log("resp of login user", resp);
 
                 if(resp.data.success){
-                    resp.data.data === "admin" ? navigate('/adminPage') : navigate('/userPage')
+                    resp.data.data.role === "admin" ? navigate('/adminPage',{state:{userData:resp.data.data}}) : navigate('/userPage')
                 }
 
             } catch (error) {

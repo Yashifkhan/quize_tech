@@ -42,7 +42,7 @@ export const login=async(req,resp)=>{
                 if(!user){
                     resp.status(401).json({message:"password is invalid "})
                 }else{
-                    resp.status(200).json({message:"login succsussfully",success:true,data:result[0]    .role})
+                    resp.status(200).json({message:"login succsussfully",success:true,data:result[0]})
                 }
                 
                 
