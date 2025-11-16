@@ -1,14 +1,15 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { useFetcher, useLocation } from 'react-router-dom';
+import Quizs from './Quizs';
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
 const AdminPage = () => {
   const location=useLocation()
   const user = location.state?.userData;
   const [createQuizeModal, setCreateQuizeModal] = useState(false)
-  // activeQuestionIndex: which question is open for edit. 0 = first, -1 = none.
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0)
+  const [quizs,setQuiz]=useState(null)
 
   const [catagoryData, setcatagoryData] = useState({
     category_name: '', topic_name: '', description: ''
@@ -109,7 +110,11 @@ const AdminPage = () => {
   const fetchQuizs=async()=>{
     try {
       const resp=await axios.get(`${BASE_URL}/get-quiz`)
-      console.log(resp);
+      if(resp.data.success){
+        console.log("success if block");
+        setQuiz(resp.data.data)
+        
+      }
     } catch (error) {
       console.log("quiz are not get"); 
     }
@@ -510,6 +515,13 @@ useEffect(()=>{
           </div>
         </div>
       )}
+
+      {/* show quize moda  */}
+      {
+        quizs?.length > 0 && <Quizs quizs={quizs}></Quizs>
+          
+        
+      }
     </div>
 
   )
