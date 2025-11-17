@@ -14,13 +14,12 @@ function App() {
     <>
 
     <BrowserRouter>
-      <TopHeader></TopHeader>
     <Routes>
       <Route path='/' element={<Home></Home>}></Route>
       <Route path='/login' element={<LoginPage></LoginPage>}></Route>
       <Route path='/register' element={<RegisterForm></RegisterForm>}></Route>
-      <Route path='/adminPage' element={<AdminPage></AdminPage>}></Route>
-      <Route path='/userPage' element={<UserPage></UserPage>}></Route>
+      <Route path='/admin-page' element={<AdminPage></AdminPage>}></Route>
+      <Route path='/user-page' element={<UserPage></UserPage>}></Route>
     </Routes>
        
     </BrowserRouter>

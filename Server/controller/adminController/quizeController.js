@@ -129,3 +129,150 @@ export const getQuiz = (req, resp) => {
         });
     });
 };
+
+
+export const updateQuiz = (req, resp) => {
+    const db = connection;
+    const { quiz_id, catagoryData, quizeData, questionsData } = req.body;
+
+    if (!quiz_id || !catagoryData || !quizeData || !questionsData) {
+        return resp.status(400).json({ message: "All fields are required", success: false });
+    }
+
+    // 🔹 1️⃣ UPDATE CATEGORY
+    const updateCategorySql = `
+        UPDATE category
+        SET category_name = ?, topic_name = ?, description = ?
+        WHERE id = ?
+    `;
+
+    db.query(
+        updateCategorySql,
+        [
+            catagoryData.category_name,
+            catagoryData.topic_name,
+            catagoryData.description,
+            catagoryData.id // ✔ correct category id
+        ],
+
+        (err) => {
+            if (err) {
+                console.log("CATEGORY UPDATE ERROR:", err);
+                return resp.status(500).json({ message: "Error updating category", success: false });
+            }
+
+            // 🔹 2️⃣ UPDATE QUIZ
+            const updateQuizSql = `
+                UPDATE quizs
+                SET title = ?, difficulty = ?, category_id = ?
+                WHERE id = ?
+            `;
+
+            db.query(
+                updateQuizSql,
+                [
+                    quizeData.title,
+                    quizeData.difficulty,
+                    catagoryData.id, // ✔ category id must come from category table
+                    quiz_id
+                ],
+
+                (err) => {
+                    if (err) {
+                        console.log("QUIZ UPDATE ERROR:", err);
+                        return resp.status(500).json({ message: "Error updating quiz", success: false });
+                    }
+
+                    // 🔹 3️⃣ QUESTIONS PROCESS (UPDATE + INSERT + DELETE)
+                    const updateQ = `
+                        UPDATE questions
+                        SET question_text=?, option_1=?, option_2=?, option_3=?, option_4=?,
+                            correct_option=?, difficulty=?, status=?
+                        WHERE id=? AND quiz_id=?
+                    `;
+
+                    const insertQ = `
+                        INSERT INTO questions
+                        (quiz_id, question_text, option_1, option_2, option_3, option_4, correct_option, difficulty, created_by)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `;
+
+                    const deleteQ = `DELETE FROM questions WHERE id=? AND quiz_id=?`;
+
+                    let done = 0;
+                    let error = false;
+
+                    // If no questions, return success
+                    if (questionsData.length === 0) {
+                        return resp.status(200).json({
+                            success: true,
+                            message: "Quiz updated successfully"
+                        });
+                    }
+
+                    questionsData.forEach(q => {
+                        // 🗑 DELETE QUESTION
+                        if (q.delete === true) {
+                            db.query(deleteQ, [q.id, quiz_id], callback);
+                        }
+
+                        // ✏ UPDATE QUESTION
+                        else if (q.id) {
+                            db.query(
+                                updateQ,
+                                [
+                                    q.question_text,
+                                    q.option_1,
+                                    q.option_2,
+                                    q.option_3,
+                                    q.option_4,
+                                    q.correct_option,
+                                    q.difficulty,
+                                    q.status ?? 1,
+                                    q.id,
+                                    quiz_id
+                                ],
+                                callback
+                            );
+                        }
+
+                        // ➕ INSERT NEW QUESTION
+                        else {
+                            db.query(
+                                insertQ,
+                                [
+                                    quiz_id,
+                                    q.question_text,
+                                    q.option_1,
+                                    q.option_2,
+                                    q.option_3,
+                                    q.option_4,
+                                    q.correct_option,
+                                    q.difficulty,
+                                    quizeData.created_by
+                                ],
+                                callback
+                            );
+                        }
+                    });
+
+                    function callback(err) {
+                        if (err && !error) {
+                            console.log("QUESTION UPDATE ERROR:", err);
+                            error = true;
+                            return resp.status(500).json({ message: "Error updating questions", success: false });
+                        }
+
+                        done++;
+                        if (done === questionsData.length && !error) {
+                            return resp.status(200).json({
+                                success: true,
+                                message: "Quiz updated successfully"
+                            });
+                        }
+                    }
+                }
+            );
+        }
+    );
+};

@@ -113,7 +113,6 @@ const AdminPage = () => {
       if(resp.data.success){
         console.log("success if block");
         setQuiz(resp.data.data)
-        
       }
     } catch (error) {
       console.log("quiz are not get"); 

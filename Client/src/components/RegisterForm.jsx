@@ -1,6 +1,7 @@
 import axios from 'axios'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import TopHeader from './TopHeader';
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
@@ -40,7 +41,9 @@ const RegisterForm = () => {
 
 
     return (
-   <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+ <div>
+  <TopHeader></TopHeader>
+    <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
   <h1 className="text-3xl font-bold mb-6 mt-25">Welcome to Quiz Tech</h1>
 
   <div className="w-full max-w-md p-6 border rounded-xl shadow-md bg-white">
@@ -134,6 +137,7 @@ const RegisterForm = () => {
     </form>
   </div>
 </div>
+ </div>
 
     )
 }
