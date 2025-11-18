@@ -75,19 +75,16 @@ export const createQuiz = (req, resp) => {
 
 export const getQuiz = (req, resp) => {
     const db = connection;
-
     const categorySQL = "SELECT * FROM category";
     db.query(categorySQL, (err, categories) => {
         if (err) {
             return resp.status(500).json({ message: "server error", success: false });
         }
-
         const quizSQL = "SELECT * FROM quizs";
         db.query(quizSQL, (err, quizzes) => {
             if (err) {
                 return resp.status(500).json({ message: "server error", success: false });
             }
-
             const quizIds = quizzes.map(q => q.id);
 
             if (quizIds.length === 0) {
