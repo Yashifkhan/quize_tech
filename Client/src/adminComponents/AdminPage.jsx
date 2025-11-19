@@ -2,6 +2,7 @@ import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { useFetcher, useLocation } from 'react-router-dom';
 import Quizs from './Quizs';
+import TopHeader from '../components/TopHeader';
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
 const AdminPage = () => {
@@ -184,6 +185,8 @@ useEffect(()=>{
 
   
   return (
+   <>
+    <TopHeader></TopHeader>
     <div className="relative min-h-screen  from-gray-50 to-green-50 ">
       {/* Add Quiz Button */}
       <div
@@ -522,6 +525,7 @@ useEffect(()=>{
         
       }
     </div>
+   </>
 
   )
 }
