@@ -19,10 +19,7 @@ const UserPage = () => {
  const [startTime, setStartTime] = useState(null);
 const [timePassed, setTimePassed] = useState(0);
 const [isRunning, setIsRunning] = useState(false);
-
-
-
-
+const [attemptQuize,setAttemptQuiz]=useState(null)
 
 
 
@@ -79,22 +76,63 @@ const handleSubmitQuiz = () => {
 
   }
 
-  const submitPlayQuiz = () => {
+  const selectedAnswer=(opt,idx,questionId)=>{
+    setSelectedOption(opt)
+     const time=formatTime(timePassed)
+    const userAns = opt=== "option_1" ? "a" : opt === "option_2" ? "b" : opt === "option_3" ? "c" : "d"
+    console.log("userAns",userAns);
+    
+    setAttemptQuiz((prev) => ({
+  quizId: selectedQuiz?.id,
+  userId: user?.id,
+  time:time,
+  questions: [
+    ...(prev?.questions || []), 
+    {
+      questionId: questionId,
+      userAns: userAns
+    }
+  ]
+}));
+
+    // console.log("selected ans",opt);
+    // console.log("question index of",idx);
+    // console.log("question",questionId);
+    // console.log("selectedQuiz.id",selectedQuiz.id);
+    
+    
+    
+    
+
+  }
+
+  const submitPlayQuiz = async() => {
     if (currentIndex < selectedQuiz.questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
     } else if(currentIndex === selectedQuiz.questions.length - 1){
       handleSubmitQuiz()
       setIsRunning(false); 
-      alert("submit quize succesfully")
+      try {
+        const resp=await axios.post(`${BASE_URL}/submit-quiz`,attemptQuize)
+        console.log("resp of submit quiz",resp);
+        if(resp?.data?.success){
+          alert("quize  submit succesfully")
+        }        
+        
+      } catch (error) {
+        alert("quize is not submit")
+        
+      }
     }
     else {
       alert("Quiz Finished!");
     }
   }
 
-console.log("startTime",startTime);
-  
+// console.log("startTime",startTime);
+console.log("selectedOption",selectedOption);
+console.log("attemptQuize-->>>",attemptQuize);
 
   return (
     <>
@@ -257,10 +295,12 @@ console.log("startTime",startTime);
                     const value =
                       selectedQuiz?.questions?.[currentIndex]?.[opt];
 
+                     const questionId = selectedQuiz?.questions?.[currentIndex]?.id;
+                      
                     return (
                       <div
                         key={idx}
-                        onClick={() => setSelectedOption(opt)}
+                        onClick={() => selectedAnswer(opt,idx,questionId)}
                         className={`border p-3 rounded-lg cursor-pointer transition 
                     ${selectedOption === opt
                             ? "bg-green-100 border-green-600"

@@ -127,7 +127,6 @@ export const getQuiz = (req, resp) => {
     });
 };
 
-
 export const updateQuiz = (req, resp) => {
     const db = connection;
     const { quiz_id, catagoryData, quizeData, questionsData } = req.body;
@@ -273,3 +272,28 @@ export const updateQuiz = (req, resp) => {
         }
     );
 };
+
+export const submitQuiz=(req,resp)=>{
+    const db=connection
+    const {quizId,userId,time,questions}=req.body
+
+    console.log("quizId",quizId);
+    console.log("userId",userId);
+    console.log("time",time);
+    console.log("questions",questions);
+
+    if(!quizId || !userId || !time || !questions){
+        return resp.status(500).json({message:"all filds are required"})
+    }
+
+    const quizSql="select * from questions where quiz_id=?"
+    db.query(quizSql,[quizId],(err,org_questions)=>{
+        if (err) return resp.status(500).json({message:"quize id is not valid",success:true})
+            console.log("org question",org_questions);
+            
+    })
+    
+    
+    
+    
+}
