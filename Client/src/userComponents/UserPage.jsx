@@ -119,7 +119,6 @@ const handleSubmitQuiz = () => {
         if(resp?.data?.success){
           alert("quize  submit succesfully")
         }        
-        
       } catch (error) {
         alert("quize is not submit")
         

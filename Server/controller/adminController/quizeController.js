@@ -277,11 +277,6 @@ export const submitQuiz=(req,resp)=>{
     const db=connection
     const {quizId,userId,time,questions}=req.body
 
-    console.log("quizId",quizId);
-    console.log("userId",userId);
-    console.log("time",time);
-    console.log("questions",questions);
-
     if(!quizId || !userId || !time || !questions){
         return resp.status(500).json({message:"all filds are required"})
     }
@@ -289,8 +284,66 @@ export const submitQuiz=(req,resp)=>{
     const quizSql="select * from questions where quiz_id=?"
     db.query(quizSql,[quizId],(err,org_questions)=>{
         if (err) return resp.status(500).json({message:"quize id is not valid",success:true})
-            console.log("org question",org_questions);
-            
+
+       let score = 0;
+       let  total_org_question=org_questions.length
+       let total_user_question=questions.length
+       let wrong_questions=[]
+
+const orgMap = {};
+for (let oq of org_questions) {
+    orgMap[oq.id] = oq.correct_option;
+}
+for (let uq of questions) {
+    let correct = orgMap[uq.questionId];
+    if (correct && uq.userAns === correct) {
+        score++;
+    }else{
+        console.log("uq-->>>",uq);
+        console.log("correct ans",correct);
+        wrong_questions.push(
+            {
+                attempt_id:'',
+                question_id:uq.questionId,
+                user_answer:uq.userAns,
+                correct_answer:correct,
+
+            }
+        )
+    }
+}
+let total_unattempted=total_org_question-total_user_question
+let [mins, secs] = time.split(":").map(Number);
+let timeInSeconds = mins * 60 + secs;
+let maxTime=45
+let timeFactor=maxTime/timeInSeconds
+if(timeFactor>1) timeFactor=1
+let accuracy =(score/total_org_question)*100
+let finalAccuracy = accuracy * timeFactor;
+
+const user_overView_score={
+    total_question:total_org_question,
+    unattempt:total_unattempted,
+    attempt:total_user_question,
+    score:score,
+    accuracy:accuracy,
+    time:finalAccuracy
+}
+const saveQuize=`insert into quiz_attempts (quiz_id,user_id,score,total_questions,correct_answers,time_taken,total_unattempted,accuracy)
+ VALUES (?,?,?,?,?,?,?)`
+db.query(saveQuize,[quizId,userId,score,total_org_question,score,time,total_unattempted,finalAccuracy],(err,result)=>{
+    if(err) return resp.status(500).json({message:"server eror",success:false})
+        const atemptId=result.insertId
+    const question=wrong_questions.map((q)=>q)
+        db.query(`insert into quiz_attempt_answers (attempt_id,question_id,user_answer,correct_answer)
+            values (?,?,?,?)` ,[atemptId,question.questionId,question.userAns,question.correct_answer],(err,result)=>{
+                if(err){
+                    return resp.status(500).json({message:"quize is not submit",success:false})
+                }else{
+                    return resp.status(200).json({message:"quize are submited",success:true,data:user_overView_score})
+                }
+            })
+})
     })
     
     
