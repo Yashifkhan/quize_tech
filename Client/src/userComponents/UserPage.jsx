@@ -20,6 +20,8 @@ const UserPage = () => {
 const [timePassed, setTimePassed] = useState(0);
 const [isRunning, setIsRunning] = useState(false);
 const [attemptQuize,setAttemptQuiz]=useState(null)
+const [scoreModal,setScoreModal]=useState(false)
+const [scoreData,setScoreData]=useState([])
 
 
 
@@ -86,6 +88,7 @@ const handleSubmitQuiz = () => {
   quizId: selectedQuiz?.id,
   userId: user?.id,
   time:time,
+  quize_type:selectedQuiz?.difficulty,
   questions: [
     ...(prev?.questions || []), 
     {
@@ -98,7 +101,7 @@ const handleSubmitQuiz = () => {
     // console.log("selected ans",opt);
     // console.log("question index of",idx);
     // console.log("question",questionId);
-    // console.log("selectedQuiz.id",selectedQuiz.id);
+    console.log("selectedQuiz.id",selectedQuiz);
     
     
     
@@ -117,7 +120,9 @@ const handleSubmitQuiz = () => {
         const resp=await axios.post(`${BASE_URL}/submit-quiz`,attemptQuize)
         console.log("resp of submit quiz",resp);
         if(resp?.data?.success){
-          alert("quize  submit succesfully")
+          setModalPlayQuiz(false)
+          setScoreModal(true)
+          setScoreData(resp.data.data)
         }        
       } catch (error) {
         alert("quize is not submit")
@@ -130,8 +135,28 @@ const handleSubmitQuiz = () => {
   }
 
 // console.log("startTime",startTime);
-console.log("selectedOption",selectedOption);
+console.log("selectedOption",selectedQuiz);
 console.log("attemptQuize-->>>",attemptQuize);
+
+
+
+const getGrade = (percentage) => {
+    if (percentage >= 90) return { grade: 'A+', color: 'text-green-600', bg: 'bg-green-100' };
+    if (percentage >= 80) return { grade: 'A', color: 'text-green-500', bg: 'bg-green-50' };
+    if (percentage >= 70) return { grade: 'B', color: 'text-blue-600', bg: 'bg-blue-100' };
+    if (percentage >= 60) return { grade: 'C', color: 'text-yellow-600', bg: 'bg-yellow-100' };
+    return { grade: 'D', color: 'text-red-600', bg: 'bg-red-100' };
+  };
+
+  const getPerformanceMessage = (percentage) => {
+    if (percentage === 100) return "Perfect Score! 🎉";
+    if (percentage >= 80) return "Excellent Work! 🌟";
+    if (percentage >= 60) return "Good Job! 👍";
+    return "Keep Practicing! 💪";
+  };
+
+  const gradeInfo = getGrade(scoreData.percentage);
+
 
   return (
     <>
@@ -149,9 +174,7 @@ console.log("attemptQuize-->>>",attemptQuize);
         </div>
       </div>
 
-      {/* PAGE CONTENT */}
-
-      {/* MODAL */}
+      {/* user profile CONTENT */}
       {openProfile && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white w-80 rounded-xl p-6 shadow-lg animate-fadeIn">
@@ -249,6 +272,7 @@ console.log("attemptQuize-->>>",attemptQuize);
         </style>
       </div>
 
+            {/* quize play modal  */}
       {modalPlayQuiz && (
 
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center z-50">
@@ -378,6 +402,143 @@ console.log("attemptQuize-->>>",attemptQuize);
         </div>
       )}
 
+      {/* quize scorere result  */}
+      {
+        scoreModal  && (
+           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        {/* Header with Rank Badge */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-t-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16"></div>
+          
+          <div className="relative z-10 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4">
+              {/* <Trophy className="w-10 h-10 text-yellow-500" /> */}
+            </div>
+            <h2 className="text-3xl font-bold mb-2">{getPerformanceMessage(scoreData.percentage)}</h2>
+            <p className="text-blue-100">Quiz Completed Successfully</p>
+          </div>
+        </div>
+
+        {/* Score Overview */}
+        <div className="p-8">
+          {/* Main Score Display */}
+          <div className="flex items-center justify-center mb-8">
+            <div className={`${gradeInfo.bg} rounded-3xl p-8 text-center min-w-[200px]`}>
+              <div className={`text-6xl font-bold ${gradeInfo.color} mb-2`}>
+                {scoreData.score}/{scoreData.total_question}
+              </div>
+              <div className={`text-2xl font-semibold ${gradeInfo.color}`}>
+                Grade: {gradeInfo.grade}
+              </div>
+              <div className="text-gray-600 mt-2 text-lg">
+                {scoreData.percentage}% Score
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {/* Accuracy */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
+              <div className="flex items-center justify-between mb-2">
+                {/* <Target className="w-5 h-5 text-purple-600" /> */}
+                <span className="text-xs font-semibold text-purple-600 uppercase">Accuracy</span>
+              </div>
+              <div className="text-2xl font-bold text-purple-700">{scoreData.accuracy}%</div>
+            </div>
+
+            {/* Time Taken */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                {/* <Clock className="w-5 h-5 text-blue-600" /> */}
+                <span className="text-xs font-semibold text-blue-600 uppercase">Time</span>
+              </div>
+              <div className="text-2xl font-bold text-blue-700">{scoreData.time}</div>
+            </div>
+
+            {/* Rank */}
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-xl border border-yellow-200">
+              <div className="flex items-center justify-between mb-2">
+                {/* <Award className="w-5 h-5 text-yellow-600" /> */}
+                <span className="text-xs font-semibold text-yellow-600 uppercase">Rank</span>
+              </div>
+              <div className="text-2xl font-bold text-yellow-700">#{scoreData.rank}</div>
+            </div>
+
+            {/* Coins Earned */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+              <div className="flex items-center justify-between mb-2">
+                {/* <TrendingUp className="w-5 h-5 text-green-600" /> */}
+                <span className="text-xs font-semibold text-green-600 uppercase">Coins</span>
+              </div>
+              <div className="text-2xl font-bold text-green-700">+{scoreData.coin}</div>
+            </div>
+          </div>
+
+          {/* Question Breakdown */}
+          <div className="bg-gray-50 rounded-xl p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              {/* <CheckCircle className="w-5 h-5 mr-2 text-green-600" /> */}
+              Question Breakdown
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                  <span className="text-gray-700">Correct Answers</span>
+                </div>
+                <span className="font-bold text-green-600">{scoreData.score}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                  <span className="text-gray-700">Wrong Answers</span>
+                </div>
+                <span className="font-bold text-red-600">{scoreData.attempt - scoreData.score}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-gray-400 rounded-full mr-3"></div>
+                  <span className="text-gray-700">Unattempted</span>
+                </div>
+                <span className="font-bold text-gray-600">{scoreData.unattempt}</span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mt-4">
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${scoreData.percentage}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <button
+              onClick={() => setScoreModal(false)}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              Review Answers
+            </button>
+            <button
+              onClick={() => setScoreModal(false)}
+              className="flex-1 bg-white border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+        
+        )
+      }
 
 
     </>
