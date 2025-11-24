@@ -386,28 +386,28 @@ export const updateQuiz = (req, resp) => {
 //             })
 // })
 //     })
-    
-    
-    
-    
+
+
+
+
 // }
 
 
-export const submitQuiz = (req, resp) => {
+export const submitQuiz = async(req, resp) => {
     const db = connection;
     const { quizId, userId, time, questions, quize_type } = req.body;
-    
+
     if (!quizId || !userId || !time || !questions) {
         return resp.status(400).json({ message: "All fields are required", success: false });
     }
 
     const quizSql = "SELECT * FROM questions WHERE quiz_id = ?";
-    
-    db.query(quizSql, [quizId], (err, org_questions) => {
+
+    db.query(quizSql, [quizId], async (err, org_questions) => {
         if (err) {
             return resp.status(500).json({ message: "Server error", success: false });
         }
-        
+
         if (org_questions.length === 0) {
             return resp.status(404).json({ message: "Quiz not found", success: false });
         }
@@ -459,7 +459,7 @@ export const submitQuiz = (req, resp) => {
         const finalPercentage = Number(percentage.toFixed(2));
 
         // Rank (you may want to implement proper ranking logic)
-        let rank = 1;
+        let rank = await calculateUserRank(resp, score, time)
 
         // Coin calculation
         let coin = 0;
@@ -502,7 +502,7 @@ export const submitQuiz = (req, resp) => {
                     // Prepare bulk insert for all questions
                     const insertAnswersSql = `INSERT INTO quiz_attempt_answers 
                         (attempt_id, question_id, user_answer, correct_answer) VALUES ?`;
-                    
+
                     // Map all questions with their answers
                     const answersValues = questions.map(q => [
                         attemptId,
@@ -514,14 +514,14 @@ export const submitQuiz = (req, resp) => {
                     db.query(insertAnswersSql, [answersValues], (err) => {
                         if (err) {
                             console.error("Error inserting answers:", err);
-                            return resp.status(500).json({ 
-                                message: "Quiz saved but failed to save answers", 
-                                success: false 
+                            return resp.status(500).json({
+                                message: "Quiz saved but failed to save answers",
+                                success: false
                             });
                         }
-                        
+
                         console.log(`Inserted ${answersValues.length} answers for attempt_id: ${attemptId}`);
-                        
+
                         // Update user coins
                         updateUserCoins(db, userId, coin, resp, user_overView_score);
                     });
@@ -538,28 +538,76 @@ export const submitQuiz = (req, resp) => {
 function updateUserCoins(db, userId, coin, resp, user_overView_score) {
     if (coin > 0) {
         const updateCoinSql = "UPDATE users SET coins = coins + ? WHERE id = ?";
-        
+
         db.query(updateCoinSql, [coin, userId], (err) => {
             if (err) {
                 console.error("Error updating coins:", err);
-                return resp.status(500).json({ 
-                    message: "Quiz saved but failed to update coins", 
-                    success: false 
+                return resp.status(500).json({
+                    message: "Quiz saved but failed to update coins",
+                    success: false
                 });
             }
-            
-            return resp.status(200).json({ 
-                message: "Quiz submitted successfully", 
-                success: true, 
-                data: user_overView_score 
+
+            return resp.status(200).json({
+                message: "Quiz submitted successfully",
+                success: true,
+                data: user_overView_score
             });
         });
     } else {
         // No coins to update
-        return resp.status(200).json({ 
-            message: "Quiz submitted successfully", 
-            success: true, 
-            data: user_overView_score 
+        return resp.status(200).json({
+            message: "Quiz submitted successfully",
+            success: true,
+            data: user_overView_score
         });
     }
 }
+
+// calculate the user Rank 
+const calculateUserRank = (resp, score, time) => {
+    return new Promise((resolve, reject) => {
+        const sql = `
+            SELECT score, time_taken
+            FROM quiz_attempts
+            ORDER BY score DESC, time_taken ASC
+        `;
+
+        connection.query(sql, (err, result) => {
+            if (err) return reject(err);
+
+            console.log("result", result);
+
+            // ➤ FIX: Add current user data if it's not present
+            if (!result.find(u => u.score == score && u.time_taken == time)) {
+                result.push({ score, time_taken: time });
+            }
+
+            // Assign rank
+            const ranked = result
+                .sort((a, b) => {
+                    if (b.score !== a.score) return b.score - a.score;
+                    return a.time_taken.localeCompare(b.time_taken);
+                })
+                .map((u, index) => ({
+                    ...u,
+                    rank: index + 1
+                }));
+
+            console.log("score", score);
+            console.log("time", time);
+            console.log("ranked", ranked);
+
+            // Find rank of current user
+            const myRank = ranked.find(u =>
+                u.score == score &&
+                u.time_taken == time
+            );
+
+            console.log("myRank", myRank);
+
+            resolve(myRank ? myRank.rank : null);
+        });
+    });
+};
+
