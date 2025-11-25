@@ -393,24 +393,17 @@ export const updateQuiz = (req, resp) => {
 // }
 
 
-export const submitQuiz = async(req, resp) => {
+export const submitQuiz = async (req, resp) => {
     const db = connection;
     const { quizId, userId, time, questions, quize_type } = req.body;
-
     if (!quizId || !userId || !time || !questions) {
         return resp.status(400).json({ message: "All fields are required", success: false });
     }
 
     const quizSql = "SELECT * FROM questions WHERE quiz_id = ?";
-
     db.query(quizSql, [quizId], async (err, org_questions) => {
-        if (err) {
-            return resp.status(500).json({ message: "Server error", success: false });
-        }
-
-        if (org_questions.length === 0) {
-            return resp.status(404).json({ message: "Quiz not found", success: false });
-        }
+        if (err) return resp.status(500).json({ message: "Server error", success: false });
+        if (org_questions.length === 0) return resp.status(404).json({ message: "Quiz not found", success: false });
 
         let score = 0;
         let total_org_question = org_questions.length;
@@ -422,7 +415,6 @@ export const submitQuiz = async(req, resp) => {
         for (let oq of org_questions) {
             orgMap[oq.id] = oq.correct_option;
         }
-
         // Check answers
         for (let uq of questions) {
             let correct = orgMap[uq.questionId];
@@ -470,6 +462,8 @@ export const submitQuiz = async(req, resp) => {
         }
 
         const user_overView_score = {
+            quizId: quizId,
+            userId: userId,
             total_question: total_org_question,
             unattempt: total_unattempted,
             attempt: total_user_question,
@@ -486,50 +480,39 @@ export const submitQuiz = async(req, resp) => {
             (quiz_id, user_id, rank, score, total_questions, correct_answers, time_taken, total_unattempted, percentage, accuracy)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-        db.query(
-            saveQuizSql,
-            [quizId, userId, rank, score, total_org_question, score, time, total_unattempted, finalPercentage, finalAccuracy],
-            (err, result) => {
-                if (err) {
-                    console.error("Error inserting quiz attempt:", err);
-                    return resp.status(500).json({ message: "Failed to save quiz attempt", success: false });
-                }
+        db.query(saveQuizSql, [quizId, userId, rank, score, total_org_question, score, time, total_unattempted, finalPercentage, finalAccuracy], (err, result) => {
+            if (err) return resp.status(500).json({ message: "Failed to save quiz attempt", success: false });
+            const attemptId = result.insertId;
+            // Insert ALL attempted questions (both correct and wrong answers)
+            if (questions.length > 0) {
+                const insertAnswersSql = `INSERT INTO quiz_attempt_answers (attempt_id, question_id, user_answer, correct_answer) VALUES ?`;
+                // Map all questions with their answers
+                const answersValues = questions.map(q => [
+                    attemptId,
+                    q.questionId,
+                    q.userAns || null,
+                    orgMap[q.questionId]
+                ]);
 
-                const attemptId = result.insertId;
+                db.query(insertAnswersSql, [answersValues], (err) => {
+                    if (err) {
+                        console.error("Error inserting answers:", err);
+                        return resp.status(500).json({
+                            message: "Quiz saved but failed to save answers",
+                            success: false
+                        });
+                    }
 
-                // Insert ALL attempted questions (both correct and wrong answers)
-                if (questions.length > 0) {
-                    // Prepare bulk insert for all questions
-                    const insertAnswersSql = `INSERT INTO quiz_attempt_answers 
-                        (attempt_id, question_id, user_answer, correct_answer) VALUES ?`;
+                    console.log(`Inserted ${answersValues.length} answers for attempt_id: ${attemptId}`);
 
-                    // Map all questions with their answers
-                    const answersValues = questions.map(q => [
-                        attemptId,
-                        q.questionId,
-                        q.userAns || null,
-                        orgMap[q.questionId]
-                    ]);
-
-                    db.query(insertAnswersSql, [answersValues], (err) => {
-                        if (err) {
-                            console.error("Error inserting answers:", err);
-                            return resp.status(500).json({
-                                message: "Quiz saved but failed to save answers",
-                                success: false
-                            });
-                        }
-
-                        console.log(`Inserted ${answersValues.length} answers for attempt_id: ${attemptId}`);
-
-                        // Update user coins
-                        updateUserCoins(db, userId, coin, resp, user_overView_score);
-                    });
-                } else {
-                    // No questions attempted, proceed to update coins
+                    // Update user coins
                     updateUserCoins(db, userId, coin, resp, user_overView_score);
-                }
+                });
+            } else {
+                // No questions attempted, proceed to update coins
+                updateUserCoins(db, userId, coin, resp, user_overView_score);
             }
+        }
         );
     });
 };
@@ -611,3 +594,27 @@ const calculateUserRank = (resp, score, time) => {
     });
 };
 
+export const reviewQuiz = (req, resp) => {
+    const db = connection
+    const { userId, quizId } = req.params
+    if (!userId && !quizId) {
+        resp.status(400).json({ message: "id is required" })
+    } else {
+        const getQuizData = "select id from quiz_attempts where quiz_id=? AND user_id=?"
+        db.query(getQuizData, [quizId, userId], (err, quizAttemptId) => {
+            if (err) return resp.status(400).json({ message: "quize is not found", success: false })
+            console.log("quizAttemptId", quizAttemptId);
+            const quiz = quizAttemptId[quizAttemptId.length - 1]
+            if (quiz?.id) {
+                const sql = "select * from quiz_attempt_answers where attempt_id=?"
+                db.query(sql, [quiz.id], (err, quizAns) => {
+                    if (err) return resp.status(400).json({ message: "quiz is not found", success: false, error: err })
+                    return resp.status(200).json({ message: "quize data", success: true, data: quizAns })
+
+                })
+            }
+
+
+        })
+    }
+}
