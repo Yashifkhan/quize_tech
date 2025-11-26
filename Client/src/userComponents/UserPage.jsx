@@ -5,8 +5,9 @@ import TopHeader from "../components/TopHeader";
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
-
 const UserPage = () => {
+
+  // states 
   const location = useLocation();
   const user = location?.state?.userData;
   const [openProfile, setOpenProfile] = useState(false);
@@ -23,14 +24,18 @@ const UserPage = () => {
   const [scoreModal, setScoreModal] = useState(false)
   const [scoreData, setScoreData] = useState([])
   const [reviewModal, setReviewModal] = useState(false)
-  const [reviewquizData,setReviewquizData]=useState(null)
+  const [reviewquizData, setReviewquizData] = useState(null)
+  const [categoryTopic,setCategoryTopic]=useState(null)
+  const [selectedDiff,setSelectedDiff]=useState("all")
 
 
 
 
   const getQuizs = async () => {
     try {
-      const resp = await axios.get(`${BASE_URL}/get-quiz`)
+      console.log("setSelectedDiff",selectedDiff);
+      
+      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}`)
       console.log("getquize resp", resp?.data?.data);
       if (resp?.data?.success) {
         setQuizes(resp.data.data)
@@ -43,7 +48,7 @@ const UserPage = () => {
   }
   useEffect(() => {
     getQuizs()
-  }, [])
+  }, [selectedDiff])
 
 
   useEffect(() => {
@@ -69,6 +74,23 @@ const UserPage = () => {
     alert(`Quiz completed in ${formatTime(timePassed)}`);
   };
 
+
+  const fetchCategoryTopic=async()=>{
+  try {
+      const resp=await axios.get(`${BASE_URL}/getQuizCategoryTopicname`)
+      console.log("resp of get cat topic ",resp);
+      if(resp.data.success){
+        setCategoryTopic(resp.data.data)
+      }
+  } catch (error) {
+    console.log("cat or topic is not get ");
+  }
+    
+  }
+
+  useEffect(()=>{
+    fetchCategoryTopic()
+  },[])
 
   const playQuizFunction = (quiz) => {
     const now = new Date();
@@ -111,21 +133,21 @@ const UserPage = () => {
 
   }
 
-  const reviewFunction=async(quizData)=>{
-    const quizId=quizData?.quizId || 7
-    const userId=quizData?.userId || 5
-     if(userId && quizId){
+  const reviewFunction = async (quizData) => {
+    const quizId = quizData?.quizId || 7
+    const userId = quizData?.userId || 5
+    if (userId && quizId) {
       const resp = await axios.get(`${BASE_URL}/reviewQuiz/${quizId}/${userId}`)
       setReviewquizData(resp.data.data)
-      console.log("resp of quiz review",resp);
-      
-     }
-   
+      console.log("resp of quiz review", resp);
+
+    }
+
     setReviewModal(true);
-    setScoreModal(false) 
+    setScoreModal(false)
 
   }
-  
+
 
   const submitPlayQuiz = async () => {
     if (currentIndex < selectedQuiz.questions.length - 1) {
@@ -176,44 +198,38 @@ const UserPage = () => {
   const gradeInfo = getGrade(scoreData.percentage);
 
 
-  
+console.log("categoryTopic",categoryTopic);
+
   return (
     <>
       {/* HEADER */}
-      <TopHeader></TopHeader>
-  <div className="absolute top-20 right-4 flex items-center gap-4">
+      <div className="p-4 shadow-lg bg-white flex items-center justify-between">
 
-  {/* Glass Coins Card */}
-  <div className="flex items-center gap-4 px-5 py-3 rounded-2xl shadow-xl 
-                  bg-white/10 backdrop-blur-lg border border-white/20 
-                  animate-fadeIn cursor-default text-black">
+  {/* Logo / Title */}
+  <h1 className="font-bold text-lg">Quize Tech</h1>
 
-    {/* Icon Circle */}
-    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 
-                    flex items-center justify-center shadow-md">
-      <span className="text-2xl">🪙</span>
-    </div>
+  {/* Right Section */}
+  <div className="flex items-center gap-4">
 
-    {/* Text */}
-    <div className="leading-tight">
+    {/* Coins */}
+    <div className="leading-tight text-right">
       <p className="text-[11px] font-medium">Winning Coins</p>
       <h1 className="text-2xl font-extrabold">{user?.coins || 0}</h1>
     </div>
-  </div>
 
-  {/* Profile Button */}
-  <button
-    onClick={() => setOpenProfile(true)}
-    className="w-12 h-12 rounded-2xl bg-gray-900 text-white flex items-center justify-center 
-               text-lg font-bold shadow-xl hover:bg-gray-700 transition active:scale-95"
-  >
-    {user?.name?.[0]?.toUpperCase() || "U"}
-  </button>
+    {/* Profile Button */}
+    <button
+      onClick={() => setOpenProfile(true)}
+      className="w-12 h-12 rounded-2xl bg-gray-900 text-white flex items-center justify-center 
+      text-lg font-bold shadow-xl hover:bg-gray-700 transition active:scale-95"
+    >
+      {user?.name?.[0]?.toUpperCase() || "U"}
+    </button>
+
+  </div>
 
 </div>
 
-
-   
 
       {/* user profile CONTENT */}
       {openProfile && (
@@ -245,10 +261,51 @@ const UserPage = () => {
       )}
 
 
+
       {/* all quize  */}
-      <div className="pt-20 px-8">
-        <h1 className="text-2xl font-bold mb-3 text-blue-700">All Quizzes</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="pt-10 px-8">
+        <div className="flex justify-between">
+          <h1 className="text-2xl font-bold mb-3 text-blue-700">All Quizzes</h1>
+                {/* Filter for search quiz */}
+<div className="flex items-center gap-3 p-2">
+
+  {/* Difficulty */}
+  <select 
+    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+     onChange={(e) => setSelectedDiff(e.target.value)}
+  >
+    <option value="all">Select Difficulty</option>
+    <option value="easy">Easy</option>
+    <option value="medium">Medium</option>
+    <option value="hard">Hard</option>
+  </select>
+
+  {/* Category (data will come from loop) */}
+  <select
+    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="">Select Category</option>
+    {/* Example dynamic */}
+    {categoryTopic?.map((t) => (
+        <option key={t.id} value={t.category_name}>{t.category_name}</option>
+      ))}
+  </select>
+
+  {/* Topic (data will come from loop) */}
+  <select
+    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <option value="">Select Topic</option>
+    {/* Example dynamic */}
+    {categoryTopic?.map((cat) => (
+        <option key={cat.id} value={cat.topic_name}>{cat.topic_name}</option>
+      ))}
+    
+  </select>
+
+</div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-2xl ">
           {quizs?.map((quiz) => (
             <div
               key={quiz.id}
@@ -583,172 +640,169 @@ const UserPage = () => {
 
 
       {/* Review score  modal  */}
-      
-       {reviewModal && (
-  <div className="fixed inset-0 bg-white bg-opacity-50 flex items-center justify-center p-4 z-50">
 
-    <div className="rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      {reviewModal && (
+        <div className="fixed inset-0 bg-white bg-opacity-50 flex items-center justify-center p-4 z-50">
 
-      <div className="bg-white w-11/12 max-w-xl rounded-2xl p-6 shadow-xl animate-fadeIn max-h-[80vh] overflow-auto mx-auto">
+          <div className="rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
 
-        {/* Header */}
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold">Review Quiz</h2>
+            <div className="bg-white w-11/12 max-w-xl rounded-2xl p-6 shadow-xl animate-fadeIn max-h-[80vh] overflow-auto mx-auto">
 
-          {/* Current Question / Total */}
-          <div className="text-sm font-semibold bg-gray-100 px-3 py-1 rounded-lg">
-            {currentIndex + 1}/{selectedQuiz?.questions?.length}
-          </div>
+              {/* Header */}
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-bold">Review Quiz</h2>
 
-          <button
-            onClick={() => setReviewModal(false)}
-            className="text-xl font-bold hover:text-red-600 transition"
-          >
-            ✕
-          </button>
-        </div>
+                {/* Current Question / Total */}
+                <div className="text-sm font-semibold bg-gray-100 px-3 py-1 rounded-lg">
+                  {currentIndex + 1}/{selectedQuiz?.questions?.length}
+                </div>
 
-        {/* Current Question */}
-        <div className="mt-3 space-y-4">
-          <p className="font-semibold text-lg">
-            {currentIndex + 1}.{" "}
-            {selectedQuiz?.questions?.[currentIndex]?.question_text}
-          </p>
+                <button
+                  onClick={() => setReviewModal(false)}
+                  className="text-xl font-bold hover:text-red-600 transition"
+                >
+                  ✕
+                </button>
+              </div>
 
-{/* Options */}
-<div className="space-y-4 mt-4">
+              {/* Current Question */}
+              <div className="mt-3 space-y-4">
+                <p className="font-semibold text-lg">
+                  {currentIndex + 1}.{" "}
+                  {selectedQuiz?.questions?.[currentIndex]?.question_text}
+                </p>
 
-  {["option_1", "option_2", "option_3", "option_4"]
-    .filter((opt) => selectedQuiz?.questions?.[currentIndex]?.[opt])
-    .map((opt, idx) => {
-      const question = selectedQuiz?.questions?.[currentIndex];
-      const questionId = question?.id;
-      const value = question?.[opt];
+                {/* Options */}
+                <div className="space-y-4 mt-4">
 
-      const attempt = reviewquizData?.find(
-        (q) => q.question_id === questionId
-      );
+                  {["option_1", "option_2", "option_3", "option_4"]
+                    .filter((opt) => selectedQuiz?.questions?.[currentIndex]?.[opt])
+                    .map((opt, idx) => {
+                      const question = selectedQuiz?.questions?.[currentIndex];
+                      const questionId = question?.id;
+                      const value = question?.[opt];
 
-      const correct = attempt?.correct_answer;
-      const userAns = attempt?.user_answer;
+                      const attempt = reviewquizData?.find(
+                        (q) => q.question_id === questionId
+                      );
 
-      const optionKey = ["a", "b", "c", "d"][idx];
+                      const correct = attempt?.correct_answer;
+                      const userAns = attempt?.user_answer;
 
-      // UI colors
-      let wrapperClass =
-        "border rounded-xl p-4 shadow-sm transition-all duration-300 bg-white/60 backdrop-blur";
+                      const optionKey = ["a", "b", "c", "d"][idx];
 
-      // Correct answer UI
-      if (correct === optionKey) {
-        wrapperClass += " border-green-600 bg-green-50 shadow-green-100";
-      }
+                      // UI colors
+                      let wrapperClass =
+                        "border rounded-xl p-4 shadow-sm transition-all duration-300 bg-white/60 backdrop-blur";
 
-      // Wrong user selected answer UI
-      if (userAns === optionKey && userAns !== correct) {
-        wrapperClass += " border-red-600 bg-red-50 shadow-red-100";
-      }
+                      // Correct answer UI
+                      if (correct === optionKey) {
+                        wrapperClass += " border-green-600 bg-green-50 shadow-green-100";
+                      }
 
-      return (
-        <div key={idx} className={wrapperClass}>
-          <div className="flex items-center gap-3">
-            <div className="text-lg font-bold text-gray-700 opacity-90 w-6">
-              {["A", "B", "C", "D"][idx]}.
-            </div>
+                      // Wrong user selected answer UI
+                      if (userAns === optionKey && userAns !== correct) {
+                        wrapperClass += " border-red-600 bg-red-50 shadow-red-100";
+                      }
 
-            <div className="text-gray-900 font-medium text-base">
-              {value}
-            </div>
-          </div>
+                      return (
+                        <div key={idx} className={wrapperClass}>
+                          <div className="flex items-center gap-3">
+                            <div className="text-lg font-bold text-gray-700 opacity-90 w-6">
+                              {["A", "B", "C", "D"][idx]}.
+                            </div>
 
-          {/* Badges */}
-          <div className="mt-3 flex flex-wrap gap-2">
+                            <div className="text-gray-900 font-medium text-base">
+                              {value}
+                            </div>
+                          </div>
 
-            {/* Correct Answer Badge */}
-            {correct === optionKey && (
-              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-600 text-white shadow">
-                Correct Answer
-              </span>
-            )}
+                          {/* Badges */}
+                          <div className="mt-3 flex flex-wrap gap-2">
 
-            {/* User Answer Badge */}
-            {userAns === optionKey && (
-              <span
-                className={`px-3 py-1 text-xs font-semibold rounded-full shadow
-                  ${
-                    userAns === correct
-                      ? "bg-green-500 text-white"
-                      : "bg-red-500 text-white"
-                  }
+                            {/* Correct Answer Badge */}
+                            {correct === optionKey && (
+                              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-600 text-white shadow">
+                                Correct Answer
+                              </span>
+                            )}
+
+                            {/* User Answer Badge */}
+                            {userAns === optionKey && (
+                              <span
+                                className={`px-3 py-1 text-xs font-semibold rounded-full shadow
+                  ${userAns === correct
+                                    ? "bg-green-500 text-white"
+                                    : "bg-red-500 text-white"
+                                  }
                 `}
-              >
-                Your Answer
-              </span>
-            )}
-          </div>
-        </div>
-      );
-    })}
-</div>
+                              >
+                                Your Answer
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
 
 
-        </div>
+              </div>
 
-        {/* Navigation Buttons */}
-        <div className="mt-6 flex justify-between">
-          {/* Prev Button */}
-          <button
-            disabled={currentIndex === 0}
-            onClick={() => {
-              setCurrentIndex((prev) => prev - 1);
-              setSelectedOption(null);
-            }}
-            className={`px-4 py-2 rounded-lg border transition
-              ${
-                currentIndex === 0
-                  ? "opacity-40 cursor-not-allowed"
-                  : "hover:bg-gray-100"
-              }`}
-          >
-            Prev
-          </button>
+              {/* Navigation Buttons */}
+              <div className="mt-6 flex justify-between">
+                {/* Prev Button */}
+                <button
+                  disabled={currentIndex === 0}
+                  onClick={() => {
+                    setCurrentIndex((prev) => prev - 1);
+                    setSelectedOption(null);
+                  }}
+                  className={`px-4 py-2 rounded-lg border transition
+              ${currentIndex === 0
+                      ? "opacity-40 cursor-not-allowed"
+                      : "hover:bg-gray-100"
+                    }`}
+                >
+                  Prev
+                </button>
 
-          {/* Save & Next / Submit */}
-          <button
-            onClick={() => submitPlayQuiz()}
-            className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
-          >
-            {currentIndex === selectedQuiz?.questions?.length - 1
-              ? "Submit"
-              : "Save & Next"}
-          </button>
-        </div>
+                {/* Save & Next / Submit */}
+                <button
+                  onClick={() => submitPlayQuiz()}
+                  className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
+                >
+                  {currentIndex === selectedQuiz?.questions?.length - 1
+                    ? "Submit"
+                    : "Save & Next"}
+                </button>
+              </div>
 
-        {/* Save Quiz Button (only if not last question) */}
-        {currentIndex !== selectedQuiz?.questions?.length - 1 && (
-          <div className="flex w-full">
-            <button
-              disabled={!selectedOption}
-              onClick={() => {
-                handleSubmitQuiz();
-                setIsRunning(false);
-              }}
-              className={`
+              {/* Save Quiz Button (only if not last question) */}
+              {currentIndex !== selectedQuiz?.questions?.length - 1 && (
+                <div className="flex w-full">
+                  <button
+                    disabled={!selectedOption}
+                    onClick={() => {
+                      handleSubmitQuiz();
+                      setIsRunning(false);
+                    }}
+                    className={`
                 relative mt-3 bg-green-600 w-full py-2 text-white text-xl rounded-md
-                ${
-                  !selectedOption
-                    ? "opacity-40 cursor-not-allowed"
-                    : "hover:bg-green-700"
-                }
+                ${!selectedOption
+                        ? "opacity-40 cursor-not-allowed"
+                        : "hover:bg-green-700"
+                      }
               `}
-            >
-              Save Quiz
-            </button>
+                  >
+                    Save Quiz
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+        </div>
+      )}
 
 
 

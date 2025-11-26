@@ -75,18 +75,27 @@ export const createQuiz = (req, resp) => {
 
 export const getQuiz = (req, resp) => {
     const db = connection;
+    const { selectedDiff } = req.params;
+
     const categorySQL = "SELECT * FROM category";
     db.query(categorySQL, (err, categories) => {
         if (err) {
             return resp.status(500).json({ message: "server error", success: false });
         }
-        const quizSQL = "SELECT * FROM quizs";
+
+        let quizSQL = "SELECT * FROM quizs";
+
+        // If NOT "all", filter by difficulty
+        if (selectedDiff !== "all") {
+            quizSQL = `SELECT * FROM quizs WHERE difficulty = '${selectedDiff}'`;
+        }
+
         db.query(quizSQL, (err, quizzes) => {
             if (err) {
                 return resp.status(500).json({ message: "server error", success: false });
             }
-            const quizIds = quizzes.map(q => q.id);
 
+            const quizIds = quizzes.map(q => q.id);
             if (quizIds.length === 0) {
                 return resp.status(200).json({
                     message: "no quizzes found",
@@ -110,11 +119,11 @@ export const getQuiz = (req, resp) => {
                     groupedQuestions[q.quiz_id].push(q);
                 });
 
-                // Attach questions to each quiz
+                // Attach questions + category
                 const finalData = quizzes.map(quiz => ({
                     ...quiz,
                     questions: groupedQuestions[quiz.id] || [],
-                    category: categories.filter(c => c.id === quiz.category_id)
+                    category: categories.filter(c => c.id == quiz.category_id)
                 }));
 
                 return resp.status(200).json({
@@ -126,6 +135,7 @@ export const getQuiz = (req, resp) => {
         });
     });
 };
+
 
 export const updateQuiz = (req, resp) => {
     const db = connection;
@@ -617,4 +627,13 @@ export const reviewQuiz = (req, resp) => {
 
         })
     }
+}
+
+export const getQuizCategoryTopicname=(req,resp)=>{
+    const db=connection
+    const sql="SELECT id ,category_name,topic_name from category"
+    db.query(sql,(err,result)=>{
+        if(err) return resp.status(500).json({message:"server eror "})
+            resp.status(200).json({message:"get quize for filter",data:result,success:true})
+    })
 }
