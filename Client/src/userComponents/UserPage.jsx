@@ -25,17 +25,22 @@ const UserPage = () => {
   const [scoreData, setScoreData] = useState([])
   const [reviewModal, setReviewModal] = useState(false)
   const [reviewquizData, setReviewquizData] = useState(null)
-  const [categoryTopic,setCategoryTopic]=useState(null)
-  const [selectedDiff,setSelectedDiff]=useState("all")
+  const [categoryTopic, setCategoryTopic] = useState(null)
+  const [selectedDiff, setSelectedDiff] = useState("all")
+  const [reAttemptModal, setReAttemptModal] = useState(false)
+  const [reAttemptQuizeData, setReAttemptQuizeData] = useState(null)
+  const [showQuestionModal,setShowQuestionModal]=useState(false)
 
 
 
 
   const getQuizs = async () => {
+
     try {
-      console.log("setSelectedDiff",selectedDiff);
-      
-      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}`)
+      console.log("setSelectedDiff", selectedDiff);
+      console.log("userId", user.id);
+      const userId = user.id
+      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`)
       console.log("getquize resp", resp?.data?.data);
       if (resp?.data?.success) {
         setQuizes(resp.data.data)
@@ -75,22 +80,22 @@ const UserPage = () => {
   };
 
 
-  const fetchCategoryTopic=async()=>{
-  try {
-      const resp=await axios.get(`${BASE_URL}/getQuizCategoryTopicname`)
-      console.log("resp of get cat topic ",resp);
-      if(resp.data.success){
+  const fetchCategoryTopic = async () => {
+    try {
+      const resp = await axios.get(`${BASE_URL}/getQuizCategoryTopicname`)
+      console.log("resp of get cat topic ", resp);
+      if (resp.data.success) {
         setCategoryTopic(resp.data.data)
       }
-  } catch (error) {
-    console.log("cat or topic is not get ");
-  }
-    
+    } catch (error) {
+      console.log("cat or topic is not get ");
+    }
+
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchCategoryTopic()
-  },[])
+  }, [])
 
   const playQuizFunction = (quiz) => {
     const now = new Date();
@@ -148,6 +153,36 @@ const UserPage = () => {
 
   }
 
+  const reAttemptQuizFunction = async (quizId,quizeNumber) => {
+    setReAttemptModal(true)
+    console.log("quizeId", quizId);
+    // console.log("selectedReAtteQuiz",selectedReAtteQuiz);
+    
+    const userId = user.id
+    if (quizId && userId) {
+      try {
+        const selectedReAtteQuiz=quizeNumber || null
+        const resp = await axios.get(`${BASE_URL}/re-attempt-quiz/${userId}/${quizId}/${selectedReAtteQuiz}`)
+        console.log("resp of get re-attempt quize", resp);
+        if (resp.data.success) {
+          setReAttemptQuizeData(resp.data.data)
+        }
+      } catch (error) {
+        console.log("re-attempt quize are not found");
+      }
+    }
+
+  }
+
+
+  // useEffect(()=>{
+  //   reAttemptQuizFunction(7)
+  // },[selectedReAtteQuiz])
+
+  const totalAttmpt = []
+  for (let i = 1; i <= reAttemptQuizeData?.totalAttempt; i++) {
+    totalAttmpt.push(i)
+  }
 
   const submitPlayQuiz = async () => {
     if (currentIndex < selectedQuiz.questions.length - 1) {
@@ -195,40 +230,51 @@ const UserPage = () => {
     return "Keep Practicing! 💪";
   };
 
+  const selectedReAttFunction=(quizeNumber,quizId)=>{
+    console.log("quize number",quizeNumber);
+    
+    // setSelectedReAtteQuiz(quizeNumber)
+    reAttemptQuizFunction(quizId,quizeNumber)
+    
+    
+
+  }
   const gradeInfo = getGrade(scoreData.percentage);
 
 
-console.log("categoryTopic",categoryTopic);
+  console.log("categoryTopic", categoryTopic);
 
+  console.log("totalAttmpt",totalAttmpt);
+  
   return (
     <>
       {/* HEADER */}
       <div className="p-4 shadow-lg bg-white flex items-center justify-between">
 
-  {/* Logo / Title */}
-  <h1 className="font-bold text-lg">Quize Tech</h1>
+        {/* Logo / Title */}
+        <h1 className="font-bold text-lg">Quize Tech</h1>
 
-  {/* Right Section */}
-  <div className="flex items-center gap-4">
+        {/* Right Section */}
+        <div className="flex items-center gap-4">
 
-    {/* Coins */}
-    <div className="leading-tight text-right">
-      <p className="text-[11px] font-medium">Winning Coins</p>
-      <h1 className="text-2xl font-extrabold">{user?.coins || 0}</h1>
-    </div>
+          {/* Coins */}
+          <div className="leading-tight text-right">
+            <p className="text-[11px] font-medium">Winning Coins</p>
+            <h1 className="text-2xl font-extrabold">{user?.coins || 0}</h1>
+          </div>
 
-    {/* Profile Button */}
-    <button
-      onClick={() => setOpenProfile(true)}
-      className="w-12 h-12 rounded-2xl bg-gray-900 text-white flex items-center justify-center 
+          {/* Profile Button */}
+          <button
+            onClick={() => setOpenProfile(true)}
+            className="w-12 h-12 rounded-2xl bg-gray-900 text-white flex items-center justify-center 
       text-lg font-bold shadow-xl hover:bg-gray-700 transition active:scale-95"
-    >
-      {user?.name?.[0]?.toUpperCase() || "U"}
-    </button>
+          >
+            {user?.name?.[0]?.toUpperCase() || "U"}
+          </button>
 
-  </div>
+        </div>
 
-</div>
+      </div>
 
 
       {/* user profile CONTENT */}
@@ -266,44 +312,44 @@ console.log("categoryTopic",categoryTopic);
       <div className="pt-10 px-8">
         <div className="flex justify-between">
           <h1 className="text-2xl font-bold mb-3 text-blue-700">All Quizzes</h1>
-                {/* Filter for search quiz */}
-<div className="flex items-center gap-3 p-2">
+          {/* Filter for search quiz */}
+          <div className="flex items-center gap-3 p-2">
 
-  {/* Difficulty */}
-  <select 
-    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-     onChange={(e) => setSelectedDiff(e.target.value)}
-  >
-    <option value="all">Select Difficulty</option>
-    <option value="easy">Easy</option>
-    <option value="medium">Medium</option>
-    <option value="hard">Hard</option>
-  </select>
+            {/* Difficulty */}
+            <select
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setSelectedDiff(e.target.value)}
+            >
+              <option value="all">Select Difficulty</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
 
-  {/* Category (data will come from loop) */}
-  <select
-    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    <option value="">Select Category</option>
-    {/* Example dynamic */}
-    {categoryTopic?.map((t) => (
-        <option key={t.id} value={t.category_name}>{t.category_name}</option>
-      ))}
-  </select>
+            {/* Category (data will come from loop) */}
+            <select
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select Category</option>
+              {/* Example dynamic */}
+              {categoryTopic?.map((t) => (
+                <option key={t.id} value={t.category_name}>{t.category_name}</option>
+              ))}
+            </select>
 
-  {/* Topic (data will come from loop) */}
-  <select
-    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    <option value="">Select Topic</option>
-    {/* Example dynamic */}
-    {categoryTopic?.map((cat) => (
-        <option key={cat.id} value={cat.topic_name}>{cat.topic_name}</option>
-      ))}
-    
-  </select>
+            {/* Topic (data will come from loop) */}
+            <select
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select Topic</option>
+              {/* Example dynamic */}
+              {categoryTopic?.map((cat) => (
+                <option key={cat.id} value={cat.topic_name}>{cat.topic_name}</option>
+              ))}
 
-</div>
+            </select>
+
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-2xl ">
           {quizs?.map((quiz) => (
@@ -343,13 +389,25 @@ console.log("categoryTopic",categoryTopic);
                 </p>
               </div>
 
-              {/* PLAY BUTTON */}
-              <button
-                className="w-full mt-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all shadow-md"
-                onClick={() => playQuizFunction(quiz)}
-              >
-                ▶ Play Quiz
-              </button>
+              {/*Action BUTTON */}
+              <div className=" flex gap-2">
+                {
+                  quiz.isAttempted === true ?
+                    <button className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all shadow-md"
+                      onClick={() => reAttemptQuizFunction(quiz.id)}
+                    >
+                      Re-Attempt
+                    </button>
+                    : ""
+                }
+                <button
+                  className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all shadow-md"
+                  onClick={() => playQuizFunction(quiz)}
+                >
+                  ▶ Play Quiz
+                </button>
+
+              </div>
 
             </div>
           ))}
@@ -640,7 +698,6 @@ console.log("categoryTopic",categoryTopic);
 
 
       {/* Review score  modal  */}
-
       {reviewModal && (
         <div className="fixed inset-0 bg-white bg-opacity-50 flex items-center justify-center p-4 z-50">
 
@@ -803,6 +860,108 @@ console.log("categoryTopic",categoryTopic);
           </div>
         </div>
       )}
+
+
+      {/* re-attempt-modal  */}
+      {
+        reAttemptModal === true && reAttemptQuizeData ?
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+
+      {/* Close Button */}
+      <button
+        onClick={() => setReAttemptModal(false)}
+        className="absolute top-3 right-3 text-gray-600 hover:text-black"
+      >
+        ✕
+      </button>
+
+      <h1 className="text-xl font-semibold mb-4">
+        Attempted Quiz Review
+      </h1>
+
+      {/* Total Attempt */}
+      <div className="space-y-3">
+        <h4 className="font-medium">
+          Total Attempt: {reAttemptQuizeData.totalAttempt}
+        </h4>
+
+        {/* Attempt Buttons */}
+        <div className="flex flex-wrap gap-2">
+          {totalAttmpt.map((q, index) => (
+            <button
+              key={index}
+              className="px-3 py-1 bg-green-500 text-white rounded-md"
+              onClick={()=>selectedReAttFunction(q,reAttemptQuizeData.quiz_id)}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+
+        {/* Score Overview */}
+        <div className="mt-4 space-y-2">
+         <div className="flex justify-between">
+           <h2 className="text-lg font-semibold mb-2" onClick={()=>setShowQuestionModal(false)}>Score Overview</h2>
+           <h2 className="text-red-500 font-bold" onClick={()=>setShowQuestionModal(true)}>Show Questions</h2>
+         </div>
+
+          {
+            showQuestionModal === true ? 
+            "show attempt questions "
+            : 
+            <div className="grid grid-cols-2 gap-3 text-sm">
+
+            <div className="p-3 bg-gray-100 rounded-md">
+              <p className="font-medium">Score</p>
+              <p>{reAttemptQuizeData.score} / {reAttemptQuizeData.total_questions}</p>
+            </div>
+
+            <div className="p-3 bg-gray-100 rounded-md">
+              <p className="font-medium">Correct</p>
+              <p>{reAttemptQuizeData.correct_answers}</p>
+            </div>
+
+            <div className="p-3 bg-gray-100 rounded-md">
+              <p className="font-medium">Wrong</p>
+              <p>{reAttemptQuizeData.wrong_answers}</p>
+            </div>
+
+            <div className="p-3 bg-gray-100 rounded-md">
+              <p className="font-medium">Unattempted</p>
+              <p>{reAttemptQuizeData.total_unattempted}</p>
+            </div>
+
+            <div className="p-3 bg-gray-100 rounded-md">
+              <p className="font-medium">Accuracy</p>
+              <p>{reAttemptQuizeData.accuracy}%</p>
+            </div>
+
+            <div className="p-3 bg-gray-100 rounded-md">
+              <p className="font-medium">Percentage</p>
+              <p>{reAttemptQuizeData.percentage}%</p>
+            </div>
+
+            <div className="p-3 bg-gray-100 rounded-md">
+              <p className="font-medium">Rank</p>
+              <p>{reAttemptQuizeData.rank}</p>
+            </div>
+
+            <div className="p-3 bg-gray-100 rounded-md">
+              <p className="font-medium">Time Taken</p>
+              <p>{reAttemptQuizeData.time_taken}</p>
+            </div>
+
+          </div>
+          }
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+          : ""
+      }
 
 
 
