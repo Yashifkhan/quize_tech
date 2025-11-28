@@ -140,25 +140,109 @@ export const createQuiz = (req, resp) => {
 export const getQuiz = (req, resp) => {
     const db = connection;
     const { selectedDiff, userId } = req.params;
+    const { topic = "all", category = "all" } = req.query;
+
     const categorySQL = "SELECT * FROM category";
-    console.log("useId", userId);
 
-    const attemptQuiz = "select quiz_id from quiz_attempts where user_id=?"
-    db.query(attemptQuiz, (userId), (err, quizId) => {
-        if (err) return resp.status(500).json({ message: "server error", success: false })
-        console.log("quize id", quizId);
+    db.query(categorySQL, (err, categories) => {
+        if (err) return resp.status(500).json({ message: "server error", success: false });
 
-    })
+        let quizSQL = "SELECT * FROM quizs WHERE 1=1";
 
+        // Difficulty filter
+        if (selectedDiff !== "all") {
+            quizSQL += ` AND difficulty = '${selectedDiff}'`;
+        }
+
+        // Category filter (convert category name → category id)
+        if (category !== "all") {
+            const catObj = categories.find(c => c.category_name === category);
+            if (catObj) {
+                quizSQL += ` AND category_id = ${catObj.id}`;
+            }
+        }
+
+        // Topic filter (convert topic name → topic id)
+        if (topic !== "all") {
+            const topicObj = categories.find(c => c.topic_name === topic);
+            if (topicObj) {
+                quizSQL += ` AND category_id = ${topicObj.id}`;
+            }
+        }
+
+        db.query(quizSQL, (err, quizzes) => {
+            if (err) {
+                console.log("error",err);
+                
+                return resp.status(500).json({ message: "server error", success: false });
+            }
+
+            const quizIds = quizzes.map(q => q.id);
+            if (quizIds.length === 0) {
+                return resp.status(200).json({
+                    message: "no quizzes found",
+                    success: true,
+                    data: []
+                });
+            }
+
+            const questionSQL = "SELECT * FROM questions WHERE quiz_id IN (?)";
+            db.query(questionSQL, [quizIds], (err, questions) => {
+                if (err) return resp.status(500).json({ message: "server error", success: false });
+
+                const groupedQuestions = {};
+                questions.forEach(q => {
+                    if (!groupedQuestions[q.quiz_id]) groupedQuestions[q.quiz_id] = [];
+                    groupedQuestions[q.quiz_id].push(q);
+                });
+
+                const finalData = quizzes.map(quiz => ({
+                    ...quiz,
+                    questions: groupedQuestions[quiz.id] || [],
+                    category: categories.filter(c => c.id == quiz.category_id)
+                }));
+
+                const attemptQuizSQL = "SELECT quiz_id FROM quiz_attempts WHERE user_id = ?";
+                db.query(attemptQuizSQL, [userId], (err, attemptedRows) => {
+                    if (err) return resp.status(500).json({ message: "server error", success: false });
+
+                    const attemptedSet = new Set(attemptedRows.map(row => row.quiz_id));
+
+                    const finalResult = finalData.map(quiz => ({
+                        ...quiz,
+                        isAttempted: attemptedSet.has(quiz.id)
+                    }));
+
+                    return resp.status(200).json({
+                        message: "quizzes fetched successfully",
+                        success: true,
+                        data: finalResult
+                    });
+                });
+            });
+        });
+    });
+};
+
+export const getAllQuizs = (req, resp) => {
+    const db = connection;
+    // const { selectedDiff } = req.params || "hard"
+    const selectedDiff="hard"
+
+    const categorySQL = "SELECT * FROM category";
     db.query(categorySQL, (err, categories) => {
         if (err) {
             return resp.status(500).json({ message: "server error", success: false });
         }
+console.log("selectedDiff",selectedDiff);
+
         let quizSQL = "SELECT * FROM quizs";
+
         // If NOT "all", filter by difficulty
         if (selectedDiff !== "all") {
             quizSQL = `SELECT * FROM quizs WHERE difficulty = '${selectedDiff}'`;
         }
+
         db.query(quizSQL, (err, quizzes) => {
             if (err) {
                 return resp.status(500).json({ message: "server error", success: false });
@@ -187,6 +271,7 @@ export const getQuiz = (req, resp) => {
                     }
                     groupedQuestions[q.quiz_id].push(q);
                 });
+
                 // Attach questions + category
                 const finalData = quizzes.map(quiz => ({
                     ...quiz,
@@ -194,29 +279,18 @@ export const getQuiz = (req, resp) => {
                     category: categories.filter(c => c.id == quiz.category_id)
                 }));
 
-                const attemptQuizSQL = "SELECT quiz_id FROM quiz_attempts WHERE user_id = ?";
-                db.query(attemptQuizSQL, [userId], (err, attemptedRows) => {
-                    if (err)  return resp.status(500).json({ message: "server error", success: false });
-                    const attemptedSet = new Set(attemptedRows.map(row => row.quiz_id));
-                    
-                    const finalResult = finalData.map(quiz => ({
-                        ...quiz,
-                        isAttempted: attemptedSet.has(quiz.id)
-                    }));
-                    //  const result = finalData.map
                 return resp.status(200).json({
                     message: "quizzes fetched successfully",
                     success: true,
-                    data: finalResult
+                    data: finalData
                 });
-                })
-
-
-               
             });
         });
     });
 };
+
+
+
 
 export const getReAttemptQuiz = (req, resp) => {
     const db = connection;
@@ -257,26 +331,41 @@ export const getReAttemptQuiz = (req, resp) => {
             quiz = result[index];
         }
 
-        // Add total attempts
         quiz.totalAttempt = result.length;
 
-        const attemptId = quiz.id;
-        const sql = "SELECT * FROM quiz_attempt_answers WHERE attempt_id=?";
+        // ------------------------------------------
+        // 1. FETCH ALL QUESTIONS OF THIS QUIZ
+        // ------------------------------------------
+        const getQuestionsSQL = "SELECT * FROM questions WHERE quiz_id=? ORDER BY id ASC";
 
-        db.query(sql, [attemptId], (err, quizAns) => {
+        db.query(getQuestionsSQL, [quizId], (err, questions) => {
             if (err)
-                return resp.status(400).json({ message: "answers not found", success: false, error: err });
+                return resp.status(500).json({ message: "questions fetch error", success: false, error: err });
 
-            quiz.quizAns = quizAns;
+            quiz.questions = questions;   // attach questions to quiz object
 
-            return resp.status(200).json({
-                message: "re attempt quiz data",
-                success: true,
-                data: quiz
+            // ------------------------------------------
+            // 2. FETCH USER ANSWERS FOR THIS ATTEMPT
+            // ------------------------------------------
+            const attemptId = quiz.id;
+            const sqlAns = "SELECT * FROM quiz_attempt_answers WHERE attempt_id=?";
+
+            db.query(sqlAns, [attemptId], (err, quizAns) => {
+                if (err)
+                    return resp.status(400).json({ message: "answers not found", success: false, error: err });
+
+                quiz.quizAns = quizAns;
+
+                return resp.status(200).json({
+                    message: "re attempt quiz data",
+                    success: true,
+                    data: quiz
+                });
             });
         });
     });
 };
+
 
 
 export const updateQuiz = (req, resp) => {

@@ -1,11 +1,13 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import TopHeader from "../components/TopHeader";
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
 const UserPage = () => {
+    const naviagat = useNavigate()
+
 
   // states 
   const location = useLocation();
@@ -29,18 +31,21 @@ const UserPage = () => {
   const [selectedDiff, setSelectedDiff] = useState("all")
   const [reAttemptModal, setReAttemptModal] = useState(false)
   const [reAttemptQuizeData, setReAttemptQuizeData] = useState(null)
-  const [showQuestionModal,setShowQuestionModal]=useState(false)
+  const [showQuestionModal, setShowQuestionModal] = useState(false)
+  const [selectCat,setSelectCat]=useState("all")
+  const [selectedTopic,setSelectedTopic]=useState("all")
+  const [playOneVsOneModal,setPlayOneVsOneModal]=useState(false)
+  const [liveAttemptModal,setLiveAttemptModal]=useState(false)
 
 
 
 
   const getQuizs = async () => {
-
     try {
       console.log("setSelectedDiff", selectedDiff);
       console.log("userId", user.id);
       const userId = user.id
-      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`)
+      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`,{params:{category:selectCat,topic:selectedTopic}})
       console.log("getquize resp", resp?.data?.data);
       if (resp?.data?.success) {
         setQuizes(resp.data.data)
@@ -53,7 +58,7 @@ const UserPage = () => {
   }
   useEffect(() => {
     getQuizs()
-  }, [selectedDiff])
+  }, [selectedDiff,selectCat,selectedTopic])
 
 
   useEffect(() => {
@@ -153,15 +158,15 @@ const UserPage = () => {
 
   }
 
-  const reAttemptQuizFunction = async (quizId,quizeNumber) => {
+  const reAttemptQuizFunction = async (quizId, quizeNumber) => {
     setReAttemptModal(true)
     console.log("quizeId", quizId);
     // console.log("selectedReAtteQuiz",selectedReAtteQuiz);
-    
+
     const userId = user.id
     if (quizId && userId) {
       try {
-        const selectedReAtteQuiz=quizeNumber || null
+        const selectedReAtteQuiz = quizeNumber || null
         const resp = await axios.get(`${BASE_URL}/re-attempt-quiz/${userId}/${quizId}/${selectedReAtteQuiz}`)
         console.log("resp of get re-attempt quize", resp);
         if (resp.data.success) {
@@ -175,14 +180,24 @@ const UserPage = () => {
   }
 
 
-  // useEffect(()=>{
-  //   reAttemptQuizFunction(7)
-  // },[selectedReAtteQuiz])
-
   const totalAttmpt = []
   for (let i = 1; i <= reAttemptQuizeData?.totalAttempt; i++) {
     totalAttmpt.push(i)
   }
+
+
+
+  const playOneVsOneFunction=()=>{
+    setPlayOneVsOneModal(true)
+  }
+
+  const playAttemptFunction=()=>{
+    setLiveAttemptModal(true)
+  }
+
+
+
+
 
   const submitPlayQuiz = async () => {
     if (currentIndex < selectedQuiz.questions.length - 1) {
@@ -209,12 +224,6 @@ const UserPage = () => {
     }
   }
 
-  // console.log("startTime",startTime);
-  console.log("selectedOption", selectedQuiz);
-  console.log("attemptQuize-->>>", attemptQuize);
-
-
-
   const getGrade = (percentage) => {
     if (percentage >= 90) return { grade: 'A+', color: 'text-green-600', bg: 'bg-green-100' };
     if (percentage >= 80) return { grade: 'A', color: 'text-green-500', bg: 'bg-green-50' };
@@ -230,22 +239,23 @@ const UserPage = () => {
     return "Keep Practicing! 💪";
   };
 
-  const selectedReAttFunction=(quizeNumber,quizId)=>{
-    console.log("quize number",quizeNumber);
-    
+  const selectedReAttFunction = (quizeNumber, quizId) => {
+    console.log("quize number", quizeNumber);
+
     // setSelectedReAtteQuiz(quizeNumber)
-    reAttemptQuizFunction(quizId,quizeNumber)
-    
-    
+    reAttemptQuizFunction(quizId, quizeNumber)
+
+
 
   }
   const gradeInfo = getGrade(scoreData.percentage);
 
 
-  console.log("categoryTopic", categoryTopic);
 
-  console.log("totalAttmpt",totalAttmpt);
+
+
   
+
   return (
     <>
       {/* HEADER */}
@@ -254,8 +264,42 @@ const UserPage = () => {
         {/* Logo / Title */}
         <h1 className="font-bold text-lg">Quize Tech</h1>
 
+
+
         {/* Right Section */}
         <div className="flex items-center gap-4">
+
+   <button
+  onClick={() => playAttemptFunction()}
+  className="
+    flex items-center justify-center gap-2 
+    bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600
+    text-white font-semibold px-5 py-2.5
+    rounded-2xl shadow-md 
+    transition-all duration-200 
+    hover:shadow-purple-500/40 hover:scale-[1.04]
+    active:scale-95
+    tracking-wide text-sm
+  "
+>
+  <span className="font-medium">Live Attempt</span>
+</button>
+
+          <button
+  className="
+    flex items-center justify-center gap-2 
+    bg-gradient-to-r from-purple-600 to-indigo-600
+    text-white font-semibold px-4 py-2 
+    rounded-xl shadow-lg 
+    transition-all duration-200 
+    hover:shadow-xl hover:scale-105 
+    active:scale-95
+  "
+  onClick={()=>playOneVsOneFunction()}
+>
+  <span className="text-sm tracking-wide">Play 1 V/S 1</span>
+</button>
+
 
           {/* Coins */}
           <div className="leading-tight text-right">
@@ -276,7 +320,6 @@ const UserPage = () => {
 
       </div>
 
-
       {/* user profile CONTENT */}
       {openProfile && (
         <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex justify-center items-center z-50">
@@ -296,16 +339,23 @@ const UserPage = () => {
               </p>
             </div>
 
+
+            <button
+              onClick={() =>{naviagat('/login')} }
+              className="mt-6 bg-gray-900 text-white w-full py-2 rounded-lg hover:bg-gray-700 transition"
+            >
+              Logout
+            </button>
+
             <button
               onClick={() => setOpenProfile(false)}
-              className="mt-6 bg-gray-900 text-white w-full py-2 rounded-lg hover:bg-gray-700 transition"
+              className="mt-2 bg-gray-900 text-white w-full py-2 rounded-lg hover:bg-gray-700 transition"
             >
               Close
             </button>
           </div>
         </div>
       )}
-
 
 
       {/* all quize  */}
@@ -329,6 +379,7 @@ const UserPage = () => {
             {/* Category (data will come from loop) */}
             <select
               className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+             onChange={(e)=>setSelectCat(e.target.value)}
             >
               <option value="">Select Category</option>
               {/* Example dynamic */}
@@ -340,7 +391,8 @@ const UserPage = () => {
             {/* Topic (data will come from loop) */}
             <select
               className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
+             onChange={(e)=>setSelectedTopic(e.target.value)}
+             >
               <option value="">Select Topic</option>
               {/* Example dynamic */}
               {categoryTopic?.map((cat) => (
@@ -352,7 +404,10 @@ const UserPage = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-2xl ">
-          {quizs?.map((quiz) => (
+        {
+          quizs?.length >0 ?
+            
+           quizs?.map((quiz) => (
             <div
               key={quiz.id}
               className="relative bg-white shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl p-6 border border-gray-200"
@@ -410,7 +465,14 @@ const UserPage = () => {
               </div>
 
             </div>
-          ))}
+
+            
+          ))
+
+          : <h1 className="text-red-500">
+            No Data Found
+          </h1>
+        }
         </div>
 
 
@@ -865,104 +927,203 @@ const UserPage = () => {
       {/* re-attempt-modal  */}
       {
         reAttemptModal === true && reAttemptQuizeData ?
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-    <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
 
-      {/* Close Button */}
-      <button
-        onClick={() => setReAttemptModal(false)}
-        className="absolute top-3 right-3 text-gray-600 hover:text-black"
-      >
-        ✕
-      </button>
+              {/* Close Button */}
+              <button
+                onClick={() => setReAttemptModal(false)}
+                className="absolute top-3 right-3 text-gray-600 hover:text-black"
+              >
+                ✕
+              </button>
 
-      <h1 className="text-xl font-semibold mb-4">
-        Attempted Quiz Review
-      </h1>
+              <h1 className="text-xl font-semibold mb-4">
+                Attempted Quiz Review
+              </h1>
 
-      {/* Total Attempt */}
-      <div className="space-y-3">
-        <h4 className="font-medium">
-          Total Attempt: {reAttemptQuizeData.totalAttempt}
-        </h4>
+              {/* Total Attempt */}
+              <div className="space-y-3">
+                <h4 className="font-medium">
+                  Total Attempt: {reAttemptQuizeData.totalAttempt}
+                </h4>
 
-        {/* Attempt Buttons */}
-        <div className="flex flex-wrap gap-2">
-          {totalAttmpt.map((q, index) => (
-            <button
-              key={index}
-              className="px-3 py-1 bg-green-500 text-white rounded-md"
-              onClick={()=>selectedReAttFunction(q,reAttemptQuizeData.quiz_id)}
-            >
-              {q}
-            </button>
-          ))}
-        </div>
+                {/* Attempt Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  {totalAttmpt.map((q, index) => (
+                    <button
+                      key={index}
+                      className="px-3 py-1 bg-green-500 text-white rounded-md"
+                      onClick={() => selectedReAttFunction(q, reAttemptQuizeData.quiz_id)}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
 
-        {/* Score Overview */}
-        <div className="mt-4 space-y-2">
-         <div className="flex justify-between">
-           <h2 className="text-lg font-semibold mb-2" onClick={()=>setShowQuestionModal(false)}>Score Overview</h2>
-           <h2 className="text-red-500 font-bold" onClick={()=>setShowQuestionModal(true)}>Show Questions</h2>
-         </div>
+                {/* Score Overview */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <h2 className="text-lg font-semibold mb-2 cursor-pointer" onClick={() => setShowQuestionModal(false)}>Score Overview</h2>
+                    <h2 className="text-red-500 font-bold cursor-pointer" onClick={() => setShowQuestionModal(true)}>Show Questions</h2>
+                  </div>
 
-          {
-            showQuestionModal === true ? 
-            "show attempt questions "
-            : 
-            <div className="grid grid-cols-2 gap-3 text-sm">
+                  {
+                    showQuestionModal === true ?
+                      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
 
-            <div className="p-3 bg-gray-100 rounded-md">
-              <p className="font-medium">Score</p>
-              <p>{reAttemptQuizeData.score} / {reAttemptQuizeData.total_questions}</p>
+                        {reAttemptQuizeData.questions?.map((q, i) => {
+                          const attempt = reAttemptQuizeData.quizAns?.find(
+                            (a) => a.question_id === q.id
+                          );
+
+                          const userAns = attempt?.user_answer || null;
+                          const correct = attempt?.correct_answer || q.correct_option;
+
+                          return (
+                            <div key={q.id} className="border p-4 rounded-md space-y-2">
+                              <p className="font-medium">{i + 1}. {q.question_text}</p>
+
+                              {/* OPTIONS */}
+                              <div className="space-y-1">
+                                {["a", "b", "c", "d"].map((opt) => {
+                                  const optionText =
+                                    q[`option_${opt === "a" ? 1 : opt === "b" ? 2 : opt === "c" ? 3 : 4}`];
+
+                                  if (!optionText) return null;
+
+                                  const isCorrect = opt === correct;
+                                  const isUserWrong = userAns === opt && opt !== correct;
+
+                                  return (
+                                    <div
+                                      key={opt}
+                                      className={`p-2 rounded-md 
+                  ${isCorrect ? "bg-green-200" : ""}
+                  ${isUserWrong ? "bg-red-200" : ""}
+                `}
+                                    >
+                                      {opt}) {optionText}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* ANSWER SUMMARY */}
+                              <div className="text-sm font-semibold">
+                                <p>Your Answer: {userAns ? userAns.toUpperCase() : "Not Attempted"}</p>
+                                <p>Correct Answer: {correct.toUpperCase()}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      :
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="font-medium">Score</p>
+                          <p>{reAttemptQuizeData.score} / {reAttemptQuizeData.total_questions}</p>
+                        </div>
+
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="font-medium">Correct</p>
+                          <p>{reAttemptQuizeData.correct_answers}</p>
+                        </div>
+
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="font-medium">Wrong</p>
+                          <p>{reAttemptQuizeData.wrong_answers}</p>
+                        </div>
+
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="font-medium">Unattempted</p>
+                          <p>{reAttemptQuizeData.total_unattempted}</p>
+                        </div>
+
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="font-medium">Accuracy</p>
+                          <p>{reAttemptQuizeData.accuracy}%</p>
+                        </div>
+
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="font-medium">Percentage</p>
+                          <p>{reAttemptQuizeData.percentage}%</p>
+                        </div>
+
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="font-medium">Rank</p>
+                          <p>{reAttemptQuizeData.rank}</p>
+                        </div>
+
+                        <div className="p-3 bg-gray-100 rounded-md">
+                          <p className="font-medium">Time Taken</p>
+                          <p>{reAttemptQuizeData.time_taken}</p>
+                        </div>
+
+                      </div>
+                  }
+
+                </div>
+              </div>
+
             </div>
-
-            <div className="p-3 bg-gray-100 rounded-md">
-              <p className="font-medium">Correct</p>
-              <p>{reAttemptQuizeData.correct_answers}</p>
-            </div>
-
-            <div className="p-3 bg-gray-100 rounded-md">
-              <p className="font-medium">Wrong</p>
-              <p>{reAttemptQuizeData.wrong_answers}</p>
-            </div>
-
-            <div className="p-3 bg-gray-100 rounded-md">
-              <p className="font-medium">Unattempted</p>
-              <p>{reAttemptQuizeData.total_unattempted}</p>
-            </div>
-
-            <div className="p-3 bg-gray-100 rounded-md">
-              <p className="font-medium">Accuracy</p>
-              <p>{reAttemptQuizeData.accuracy}%</p>
-            </div>
-
-            <div className="p-3 bg-gray-100 rounded-md">
-              <p className="font-medium">Percentage</p>
-              <p>{reAttemptQuizeData.percentage}%</p>
-            </div>
-
-            <div className="p-3 bg-gray-100 rounded-md">
-              <p className="font-medium">Rank</p>
-              <p>{reAttemptQuizeData.rank}</p>
-            </div>
-
-            <div className="p-3 bg-gray-100 rounded-md">
-              <p className="font-medium">Time Taken</p>
-              <p>{reAttemptQuizeData.time_taken}</p>
-            </div>
-
           </div>
-          }
-
-        </div>
-      </div>
-
-    </div>
-  </div>
           : ""
       }
 
+
+      {
+      playOneVsOneModal === true && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+
+              {/* Close Button */}
+              <button
+                onClick={() => setPlayOneVsOneModal(false)}
+                className="absolute top-3 right-3 text-gray-600 hover:text-black"
+              >
+                ✕
+              </button>
+
+               <div>
+          <h1>Play One V/s One </h1>
+          <p>This feature are Comming Soon</p>
+        </div>
+
+              </div>
+
+              </div>
+
+      )
+      }
+
+
+{
+      liveAttemptModal === true && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+
+              {/* Close Button */}
+              <button
+                onClick={() => setLiveAttemptModal(false)}
+                className="absolute top-3 right-3 text-gray-600 hover:text-black"
+              >
+                ✕
+              </button>
+
+               <div>
+          <h1>Attempt Live Quiz </h1>
+          <p>This feature are Comming Soon</p>
+        </div>
+
+              </div>
+
+              </div>
+
+      )
+      }
 
 
     </>

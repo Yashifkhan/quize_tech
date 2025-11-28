@@ -110,7 +110,9 @@ const AdminPage = () => {
   // get the quiz data 
   const fetchQuizs=async()=>{
     try {
-      const resp=await axios.get(`${BASE_URL}/get-quiz`)
+      const resp=await axios.get(`${BASE_URL}/get-quizs-all`)
+      console.log("resp",resp);
+      
       if(resp.data.success){
         console.log("success if block");
         setQuiz(resp.data.data)
