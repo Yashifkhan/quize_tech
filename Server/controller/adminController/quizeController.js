@@ -866,84 +866,340 @@ export const getQuizCategoryTopicname = (req, resp) => {
     })
 }
 
+// RECOMMENDATION SYSTEM
+export const recommendationQuiz = (req, resp) => {
+    const db = connection;
+    const { userId } = req.params;
 
-// (Starting point of recommendation system)
-export const recommendationQuiz=(req,resp)=>{
-    const db=connection
-    const {userId}=req.params
-    if(!userId){
-        return resp.status(400).json({message:"user Id is required",success:false,error:err})
-    }else{
-        const userData={}
-        // console.log("userid",userId);
-        userData.userId=userId
-        const getUserInterests="SELECT interest FROM users WHERE id=?"
-        db.query(getUserInterests,[userId],(err,interests)=>{
-            if(err) return resp.status(500).json({message:"server error",success:false,error:err})
-                // console.log("interest category ",interests);
-            userData.interest=interests[0].interest
-            const getUserAvgAccuracy="select AVG(accuracy) AS avg_accuracy  from quiz_attempts where user_id=?"
-            db.query(getUserAvgAccuracy,[userId],(err,accuracy)=>{                
-                if(err) return resp.status(500).json({message:"server error",success:false,error:err})
-                    const userAvgAcc=accuracy[0].avg_accuracy.toFixed(2)
-                // console.log("user accuracy " ,userAvgAcc);
-                userData.userAvgAcc=userAvgAcc
-                const getSkillLavel=(userAvgAcc)=>{
-                    if(userAvgAcc < 50) return "beginer"
-                    else if(userAvgAcc < 80) return "medium";
-                    return "advanced"
-                }
-                userData.userSkill=getSkillLavel(userAvgAcc)
-                const quizIds="select quiz_id from quiz_attempts where user_id=?"
-            db.query(quizIds, [userId], (err, result) => {
-    if (err) return resp.status(500).json({ message: "server error", success: false });
+    if (!userId) {
+        return resp.status(400).json({ message: "userId is required", success: false });
+    }
 
-    // quiz ids (with duplicates)
-    const quizIdsList = result.map(q => q.quiz_id);  
-    console.log("quizIdsList =>", quizIdsList);  
+    const userData = { userId };
 
-    const getCatIds = "SELECT id, category_id FROM quizs WHERE id IN (?)";
-    db.query(getCatIds, [quizIdsList], (err, catRows) => {
+    // 1. USER INTEREST
+    const getUserInterests = "SELECT interest FROM users WHERE id=?";
+    db.query(getUserInterests, [userId], (err, interests) => {
         if (err) return resp.status(500).json({ message: "server error", success: false });
-        console.log("catRows =>", catRows);
 
-        // STEP: Create a fast lookup map
-        const map = {};
-        catRows.forEach(row => {
-            map[row.id] = row.category_id;
-        });
+        userData.interest = interests[0]?.interest || null;
 
-        // STEP: Rebuild duplicated category_ids based on quizIdsList
-        const finalCategoryIds = quizIdsList.map(qid => map[qid]);
-        console.log("finalCategoryIds =>", finalCategoryIds);
+        // 2. USER AVG ACCURACY
+        const getUserAvgAccuracy = `
+            SELECT AVG(accuracy) AS avg_accuracy 
+            FROM quiz_attempts 
+            WHERE user_id=?
+        `;
 
-        const getCatName = "SELECT id, category_name FROM category WHERE id IN (?)";
-        db.query(getCatName, [finalCategoryIds], (err, catNames) => {
+        db.query(getUserAvgAccuracy, [userId], (err, accuracy) => {
             if (err) return resp.status(500).json({ message: "server error", success: false });
 
-             const nameMap = {};
-    catNames.forEach(row => {
-        nameMap[row.id] = row.category_name;
-    });
+            const userAvgAcc = Number(accuracy[0].avg_accuracy || 0).toFixed(2);
+            userData.userAvgAcc = userAvgAcc;
 
-     const finalCategoryNames = finalCategoryIds.map(id => nameMap[id]);
-     console.log("Duplicate category names =>", finalCategoryNames);
-const sql = ` SELECT quiz_id, AVG(accuracy) AS avg_accuracy FROM quiz_attempts GROUP BY quiz_id `;
-db.query(sql, (err, rows) => {
-    if (err) return resp.status(500).json({ message: "Error", success: false });
-    console.log(rows);
-    
-    console.log("user complete data ",userData);
-});
+            const getSkillLevel = acc => {
+                const a = Number(acc);
+                if (a < 50) return "beginner";
+                if (a < 80) return "medium";
+                return "advanced";
+            };
+
+            userData.userSkill = getSkillLevel(userAvgAcc);
+
+            // 3. GET USER QUIZ IDs
+            const quizIdsSql = "SELECT quiz_id FROM quiz_attempts WHERE user_id=?";
+            db.query(quizIdsSql, [userId], (err, result) => {
+                if (err) return resp.status(500).json({ message: "server error", success: false });
+
+                const quizIdsList = result.map(q => q.quiz_id);
+                if (quizIdsList.length === 0) {
+                    return resp.json({
+                        message: "No attempts, show beginner quizzes",
+                        success: true,
+                        data: [{ category: userData.interest, level: "easy" }]
+                    });
+                }
+
+                // 4. GET CATEGORY IDs
+                const getCatIds = `
+                    SELECT id, category_id 
+                    FROM quizs 
+                    WHERE id IN (?)
+                `;
+
+                db.query(getCatIds, [quizIdsList], (err, catRows) => {
+                    if (err) return resp.status(500).json({ message: "server error", success: false });
+
+                    // Map QuizID → CategoryID
+                    const map = {};
+                    catRows.forEach(row => map[row.id] = row.category_id);
+
+                    const finalCategoryIds = quizIdsList.map(qid => map[qid]);
+
+                    // 5. GET CATEGORY NAMES
+                    const getCatName = `
+                        SELECT id, category_name 
+                        FROM category 
+                        WHERE id IN (?)
+                    `;
+
+                    db.query(getCatName, [finalCategoryIds], (err, catNames) => {
+                        if (err) return resp.status(500).json({ message: "server error", success: false });
+
+                        // Map CatID → CatName
+                        const nameMap = {};
+                        catNames.forEach(row => nameMap[row.id] = row.category_name);
+
+                        // 6. GET ALL USER ATTEMPTS
+                        const sqlAttempts = `
+                            SELECT quiz_id, accuracy 
+                            FROM quiz_attempts 
+                            WHERE user_id = ?
+                        `;
+
+                        db.query(sqlAttempts, [userId], (err, userAttempts) => {
+                            if (err) return resp.status(500).json({ message: "Error", success: false });
+
+                            const categoryStats = {};
+
+                            // Build category stats
+                            userAttempts.forEach(attempt => {
+                                const qid = attempt.quiz_id;
+                                const accuracy = Number(attempt.accuracy);
+
+                                const catId = map[qid];
+                                const catName = nameMap[catId];
+
+                                if (!catName) return;
+
+                                if (!categoryStats[catName]) {
+                                    categoryStats[catName] = {
+                                        attempts: 0,
+                                        totalAccuracy: 0
+                                    };
+                                }
+
+                                categoryStats[catName].attempts++;
+                                categoryStats[catName].totalAccuracy += accuracy;
+                            });
+
+                            // 7. CLASSIFY TOPICS
+                            const topics = {};
+                            const strongTopics = [];
+                            const mediumTopics = [];
+                            const weakTopics = [];
+
+                            Object.keys(categoryStats).forEach(cat => {
+                                const d = categoryStats[cat];
+                                const avg = d.totalAccuracy / d.attempts;
+
+                                let strength = "";
+                                if (avg >= 70) strength = "strong";
+                                else if (avg >= 40) strength = "medium";
+                                else strength = "weak";
+
+                                topics[cat] = {
+                                    attempts: d.attempts,
+                                    avgAccuracy: Number(avg.toFixed(2)),
+                                    strength
+                                };
+
+                                if (strength === "strong") strongTopics.push(cat);
+                                if (strength === "medium") mediumTopics.push(cat);
+                                if (strength === "weak") weakTopics.push(cat);
+                            });
+
+                            userData.topics = topics;
+                            userData.strongTopics = strongTopics;
+                            userData.mediumTopics = mediumTopics;
+                            userData.weakTopics = weakTopics;
+
+                            // 8. FINAL QUIZ RECOMMENDATIONS
+                            const getRecommendedQuizzes = userData => {
+                                const finalList = [];
+
+                                userData.weakTopics.forEach(t =>
+                                    finalList.push({ category: t, level: "easy" })
+                                );
+                                userData.mediumTopics.forEach(t =>
+                                    finalList.push({ category: t, level: "medium" })
+                                );
+                                userData.strongTopics.forEach(t =>
+                                    finalList.push({ category: t, level: "hard" })
+                                );
+
+                                return finalList;
+                            };
+
+                            const recommended = getRecommendedQuizzes(userData);
+
+                            return resp.json({
+                                message: "Suggested quizzes",
+                                success: true,
+                                data: recommended,
+                                userStats: userData
+                            });
+
+                        });
+                    });
+                });
+            });
 
         });
     });
-});
+};
+
+// own wtite one by one step 
+// (Starting point of recommendation system)
+// export const recommendationQuiz=(req,resp)=>{
+//     const db=connection
+//     const {userId}=req.params
+//     if(!userId){
+//         return resp.status(400).json({message:"user Id is required",success:false,error:err})
+//     }else{
+//         const userData={}
+//         // console.log("userid",userId);
+//         userData.userId=userId
+//         const getUserInterests="SELECT interest FROM users WHERE id=?"
+//         db.query(getUserInterests,[userId],(err,interests)=>{
+//             if(err) return resp.status(500).json({message:"server error",success:false,error:err})
+//                 // console.log("interest category ",interests);
+//             userData.interest=interests[0].interest
+//             const getUserAvgAccuracy="select AVG(accuracy) AS avg_accuracy  from quiz_attempts where user_id=?"
+//             db.query(getUserAvgAccuracy,[userId],(err,accuracy)=>{                
+//                 if(err) return resp.status(500).json({message:"server error",success:false,error:err})
+//                     const userAvgAcc=accuracy[0].avg_accuracy.toFixed(2)
+//                 // console.log("user accuracy " ,userAvgAcc);
+//                 userData.userAvgAcc=userAvgAcc
+//                 const getSkillLavel=(userAvgAcc)=>{
+//                     if(userAvgAcc < 50) return "beginer"
+//                     else if(userAvgAcc < 80) return "medium";
+//                     return "advanced"
+//                 }
+//                 userData.userSkill=getSkillLavel(userAvgAcc)
+//             const quizIds = "SELECT quiz_id FROM quiz_attempts WHERE user_id=?";
+
+// db.query(quizIds, [userId], (err, result) => {
+//     if (err) return resp.status(500).json({ message: "server error", success: false });
+
+//     const quizIdsList = result.map(q => q.quiz_id);
+
+//     const getCatIds = "SELECT id, category_id FROM quizs WHERE id IN (?)";
+//     db.query(getCatIds, [quizIdsList], (err, catRows) => {
+//         if (err) return resp.status(500).json({ message: "server error", success: false });
+
+//         // create map here
+//         const map = {};
+//         catRows.forEach(row => {
+//             map[row.id] = row.category_id;
+//         });
+
+//         const finalCategoryIds = quizIdsList.map(qid => map[qid]);
+
+//         const getCatName = "SELECT id, category_name FROM category WHERE id IN (?)";
+//         db.query(getCatName, [finalCategoryIds], (err, catNames) => {
+//             if (err) return resp.status(500).json({ message: "server error", success: false });
+
+//             // create nameMap here
+//             const nameMap = {};
+//             catNames.forEach(row => {
+//                 nameMap[row.id] = row.category_name;
+//             });
+
+//             // NOW run userAttempts query INSIDE this block
+//             const sql = `
+//                 SELECT quiz_id, accuracy
+//                 FROM quiz_attempts
+//                 WHERE user_id = ?
+//             `;
+
+//             db.query(sql, [userId], (err, userAttempts) => {
+//                 if (err) return resp.status(500).json({ message: "Error", success: false });
+
+//                 const categoryStats = {};
+
+//                 userAttempts.forEach(attempt => {
+//                     const quizId = attempt.quiz_id;
+//                     const accuracy = Number(attempt.accuracy);
+
+//                     // USE map and nameMap safely here
+//                     const catId = map[quizId];
+//                     const catName = nameMap[catId];
+
+//                     if (!categoryStats[catName]) {
+//                         categoryStats[catName] = {
+//                             attempts: 0,
+//                             totalAccuracy: 0
+//                         };
+//                     }
+
+//                     categoryStats[catName].attempts += 1;
+//                     categoryStats[catName].totalAccuracy += accuracy;
+//                 });
+
+//                 const topics = {};
+//                 const strongTopics = [];
+//                 const mediumTopics = [];
+//                 const weakTopics = [];
+
+//                 Object.keys(categoryStats).forEach(cat => {
+//                     const data = categoryStats[cat];
+//                     const avg = data.totalAccuracy / data.attempts;
+
+//                     let strength = "";
+//                     if (avg >= 70) strength = "strong";
+//                     else if (avg >= 40) strength = "medium";
+//                     else strength = "weak";
+
+//                     topics[cat] = {
+//                         attempts: data.attempts,
+//                         avgAccuracy: Number(avg.toFixed(2)),
+//                         strength
+//                     };
+
+//                     if (strength === "strong") strongTopics.push(cat);
+//                     if (strength === "medium") mediumTopics.push(cat);
+//                     if (strength === "weak") weakTopics.push(cat);
+//                 });
+
+//                 userData.topics = topics;
+//                 userData.strongTopics = strongTopics;
+//                 userData.mediumTopics = mediumTopics;
+//                 userData.weakTopics = weakTopics;
+
+//                 console.log("final user com data ",userData);
+
+//                 function getRecommendedQuizzes(userData) {
+//     const finalList = [];
+
+//     userData.weakTopics.forEach(topic => {
+//         finalList.push({ category: topic, level: "easy" });
+//     });
+
+//     userData.mediumTopics.forEach(topic => {
+//         finalList.push({ category: topic, level: "medium" });
+//     });
+
+//     userData.strongTopics.forEach(topic => {
+//         finalList.push({ category: topic, level: "hard" });
+//     });
+
+//     return finalList;
+// }
+
+                
+//             const userShowThisQuizs=getRecommendedQuizzes(userData)
+//                 return resp.json({message:"suggested question", success: true, data: userShowThisQuizs });
+//             });
+//         });
+//     });
+// });
+
 
                     
-            })
+//             })
                 
-        })
+//         })
         
-    }
-}
+//     }
+// }
