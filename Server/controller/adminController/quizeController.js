@@ -234,7 +234,7 @@ export const getAllQuizs = (req, resp) => {
         if (err) {
             return resp.status(500).json({ message: "server error", success: false });
         }
-console.log("selectedDiff",selectedDiff);
+// console.log("selectedDiff",selectedDiff);
 
         let quizSQL = "SELECT * FROM quizs";
 
@@ -288,9 +288,6 @@ console.log("selectedDiff",selectedDiff);
         });
     });
 };
-
-
-
 
 export const getReAttemptQuiz = (req, resp) => {
     const db = connection;
@@ -867,4 +864,86 @@ export const getQuizCategoryTopicname = (req, resp) => {
         if (err) return resp.status(500).json({ message: "server eror " })
         resp.status(200).json({ message: "get quize for filter", data: result, success: true })
     })
+}
+
+
+// (Starting point of recommendation system)
+export const recommendationQuiz=(req,resp)=>{
+    const db=connection
+    const {userId}=req.params
+    if(!userId){
+        return resp.status(400).json({message:"user Id is required",success:false,error:err})
+    }else{
+        const userData={}
+        // console.log("userid",userId);
+        userData.userId=userId
+        const getUserInterests="SELECT interest FROM users WHERE id=?"
+        db.query(getUserInterests,[userId],(err,interests)=>{
+            if(err) return resp.status(500).json({message:"server error",success:false,error:err})
+                // console.log("interest category ",interests);
+            userData.interest=interests[0].interest
+            const getUserAvgAccuracy="select AVG(accuracy) AS avg_accuracy  from quiz_attempts where user_id=?"
+            db.query(getUserAvgAccuracy,[userId],(err,accuracy)=>{                
+                if(err) return resp.status(500).json({message:"server error",success:false,error:err})
+                    const userAvgAcc=accuracy[0].avg_accuracy.toFixed(2)
+                // console.log("user accuracy " ,userAvgAcc);
+                userData.userAvgAcc=userAvgAcc
+                const getSkillLavel=(userAvgAcc)=>{
+                    if(userAvgAcc < 50) return "beginer"
+                    else if(userAvgAcc < 80) return "medium";
+                    return "advanced"
+                }
+                userData.userSkill=getSkillLavel(userAvgAcc)
+                const quizIds="select quiz_id from quiz_attempts where user_id=?"
+            db.query(quizIds, [userId], (err, result) => {
+    if (err) return resp.status(500).json({ message: "server error", success: false });
+
+    // quiz ids (with duplicates)
+    const quizIdsList = result.map(q => q.quiz_id);  
+    console.log("quizIdsList =>", quizIdsList);  
+
+    const getCatIds = "SELECT id, category_id FROM quizs WHERE id IN (?)";
+    db.query(getCatIds, [quizIdsList], (err, catRows) => {
+        if (err) return resp.status(500).json({ message: "server error", success: false });
+        console.log("catRows =>", catRows);
+
+        // STEP: Create a fast lookup map
+        const map = {};
+        catRows.forEach(row => {
+            map[row.id] = row.category_id;
+        });
+
+        // STEP: Rebuild duplicated category_ids based on quizIdsList
+        const finalCategoryIds = quizIdsList.map(qid => map[qid]);
+        console.log("finalCategoryIds =>", finalCategoryIds);
+
+        const getCatName = "SELECT id, category_name FROM category WHERE id IN (?)";
+        db.query(getCatName, [finalCategoryIds], (err, catNames) => {
+            if (err) return resp.status(500).json({ message: "server error", success: false });
+
+             const nameMap = {};
+    catNames.forEach(row => {
+        nameMap[row.id] = row.category_name;
+    });
+
+     const finalCategoryNames = finalCategoryIds.map(id => nameMap[id]);
+     console.log("Duplicate category names =>", finalCategoryNames);
+const sql = ` SELECT quiz_id, AVG(accuracy) AS avg_accuracy FROM quiz_attempts GROUP BY quiz_id `;
+db.query(sql, (err, rows) => {
+    if (err) return resp.status(500).json({ message: "Error", success: false });
+    console.log(rows);
+    
+    console.log("user complete data ",userData);
+});
+
+        });
+    });
+});
+
+                    
+            })
+                
+        })
+        
+    }
 }
