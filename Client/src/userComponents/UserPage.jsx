@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { data, useLocation, useNavigate } from "react-router-dom";
 import TopHeader from "../components/TopHeader";
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
@@ -36,8 +36,48 @@ const UserPage = () => {
   const [selectedTopic,setSelectedTopic]=useState("all")
   const [playOneVsOneModal,setPlayOneVsOneModal]=useState(false)
   const [liveAttemptModal,setLiveAttemptModal]=useState(false)
+   const [mode, setMode] = useState("simple");
 
 
+
+   const handleSelect = (selected) => {
+        // setMode(selected);
+        if (mode === "simple") {
+    setMode("ai");
+    recommendationQuiz();    // load AI quizzes
+  } else {
+    setMode("simple");
+    getQuizs();              // load simple quizzes
+  }
+    };
+
+
+
+  // (Starting point of recommendation system)
+  const recommendationQuiz=async()=>{
+    const userId=user.id
+    if(!userId){
+      alert("id is required")
+    }else{
+      const resp=await axios.get(`${BASE_URL}/recommendation-quiz/${userId}`)
+      console.log("resp of recomandation quiz",resp);
+      console.log("mode value -->>>",mode);
+    if (resp.data.success === true) {
+
+    if (mode === "ai") {
+        console.log("AI mode active");
+        setQuizes(resp.data.data);
+    }
+
+    
+}
+
+      
+    }
+  }
+  useEffect(()=>{
+    recommendationQuiz()
+  },[user,mode])
 
 
   const getQuizs = async () => {
@@ -48,6 +88,9 @@ const UserPage = () => {
       const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`,{params:{category:selectCat,topic:selectedTopic}})
       console.log("getquize resp", resp?.data?.data);
       if (resp?.data?.success) {
+        setQuizes(resp.data.data)
+      }
+      else if(mode === "simple"){
         setQuizes(resp.data.data)
       }
     } catch (error) {
@@ -400,6 +443,38 @@ const UserPage = () => {
               ))}
 
             </select>
+
+            <div className="flex justify-center">
+            <div className="bg-gray-200 p-1 rounded-full flex gap-1 shadow-inner">
+
+                {/* SIMPLE */}
+                <button
+                    onClick={() => handleSelect("simple")}
+                    className={`
+                        px-5 py-2 rounded-full text-sm font-medium transition-all
+                        ${mode === "simple"
+                            ? "bg-white shadow text-blue-600"
+                            : "text-gray-600"}
+                    `}
+                >
+                    Simple
+                </button>
+
+                {/* AI RECOMMENDED */}
+                <button
+                    onClick={() => handleSelect("ai")}
+                    className={`
+                        px-5 py-2 rounded-full text-sm font-medium transition-all
+                        ${mode === "ai"
+                            ? "bg-white shadow text-purple-600"
+                            : "text-gray-600"}
+                    `}
+                >
+                    AI Recommended
+                </button>
+
+            </div>
+        </div>
 
           </div>
         </div>

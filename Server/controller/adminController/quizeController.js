@@ -148,7 +148,6 @@ export const getQuiz = (req, resp) => {
         if (err) return resp.status(500).json({ message: "server error", success: false });
 
         let quizSQL = "SELECT * FROM quizs WHERE 1=1";
-
         // Difficulty filter
         if (selectedDiff !== "all") {
             quizSQL += ` AND difficulty = '${selectedDiff}'`;
@@ -870,20 +869,15 @@ export const getQuizCategoryTopicname = (req, resp) => {
 export const recommendationQuiz = (req, resp) => {
     const db = connection;
     const { userId } = req.params;
-
     if (!userId) {
         return resp.status(400).json({ message: "userId is required", success: false });
     }
-
     const userData = { userId };
-
     // 1. USER INTEREST
     const getUserInterests = "SELECT interest FROM users WHERE id=?";
     db.query(getUserInterests, [userId], (err, interests) => {
         if (err) return resp.status(500).json({ message: "server error", success: false });
-
         userData.interest = interests[0]?.interest || null;
-
         // 2. USER AVG ACCURACY
         const getUserAvgAccuracy = `
             SELECT AVG(accuracy) AS avg_accuracy 
@@ -1030,26 +1024,111 @@ export const recommendationQuiz = (req, resp) => {
 
                                 return finalList;
                             };
-
                             const recommended = getRecommendedQuizzes(userData);
+                            console.log("user sent this quize",recommended);
+                            const categoryNames=recommended.map((q)=>q.category)
+                            const difficultyList=recommended.map((q)=>q.level)                            
+                           const getCatIdsSQL = `
+    SELECT id, category_name 
+    FROM category 
+    WHERE category_name IN (?)
+`;
+db.query(getCatIdsSQL, [categoryNames], (err, catRows) => {
+    if (err) return resp.status(500).json({ message: "server error", success:false });
 
-                            return resp.json({
-                                message: "Suggested quizzes",
-                                success: true,
-                                data: recommended,
-                                userStats: userData
-                            });
+    const conditions = [];
+
+    catRows.forEach(cat => {
+        const index = categoryNames.indexOf(cat.category_name);
+        if (index !== -1) {
+            const diff = difficultyList[index];
+            conditions.push(`(category_id = ${cat.id} AND difficulty = '${diff}')`);
+        }
+    });
+
+    if (conditions.length === 0) {
+        return resp.json({
+            message: "no matching quizzes",
+            success: true,
+            data: []
+        });
+    }
+
+    const finalQuizSQL = `
+        SELECT * FROM quizs 
+        WHERE ${conditions.join(" OR ")}
+    `;
+
+    db.query(finalQuizSQL, (err, quizList) => {
+        if (err) {
+            console.log(err);
+            return resp.status(500).json({ message: "server error", success:false });
+        }
+
+        if (quizList.length === 0) {
+            return resp.json({
+                message: "No quizzes found",
+                success: true,
+                data: []
+            });
+        }
+
+        // Extract quiz IDs
+        const quizIds = quizList.map(q => q.id);
+
+        const questionSQL = `
+            SELECT * FROM questions 
+            WHERE quiz_id IN (?)
+        `;
+
+        db.query(questionSQL, [quizIds], (err, questionRows) => {
+            if (err) {
+                console.log(err);
+                return resp.status(500).json({ message: "server error", success:false });
+            }
+
+            // Group questions by quiz
+            const groupedQuestions = {};
+
+            questionRows.forEach(q => {
+                if (!groupedQuestions[q.quiz_id]) groupedQuestions[q.quiz_id] = [];
+                groupedQuestions[q.quiz_id].push(q);
+            });
+
+            // Attach questions to quizzes
+            const finalQuizData = quizList.map(q => ({
+                ...q,
+                questions: groupedQuestions[q.id] || []
+            }));
+
+            return resp.json({
+                message: "Suggested quizzes",
+                success: true,
+                data: finalQuizData
+            });
+        });
+    });
+});
+
+
+                            
 
                         });
                     });
                 });
             });
 
+
+            
+
         });
     });
 };
 
-// own wtite one by one step 
+
+// correct it get one category name id 
+
+// own write one by one step 
 // (Starting point of recommendation system)
 // export const recommendationQuiz=(req,resp)=>{
 //     const db=connection
