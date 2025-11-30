@@ -1,5 +1,9 @@
 import connection from "../../db/config.js";
+import Groq from "groq-sdk";
 
+
+
+// manully create quize 
 export const createQuiz = (req, resp) => {
     const db = connection;
     const { catagoryData, quizeData, questionsData } = req.body;
@@ -73,6 +77,70 @@ export const createQuiz = (req, resp) => {
         });
 };
 
+
+export const genrateQuize=async(req,resp)=>{
+      console.log("ai 1 func call");
+    //   console.log("req.body",req.body);
+      
+    const {category, topic, difficulty, count, instructions}=req.body
+   
+
+    if(!category || !topic || !difficulty || !count || !instructions){
+        return resp.status(500).json({message:"server error",success:false})
+    }
+    const aiQuestions  = await generateQuestionsWithAI(category, topic, difficulty, count, instructions)
+    // console.log("aiQuestions --->>> ",aiQuestions);
+    resp.status(201).json({message:"quizs generate with ai ",success:true,data:aiQuestions})
+
+}
+
+
+// helper function of quize genrate with ai 
+const generateQuestionsWithAI=async(category, topic, difficulty, count, instructions)=>{
+     const Client = new  Groq({apiKey:process.env.GROQ_API_KEY})
+
+       const prompt = `
+Create ${count} MCQ questions.
+
+Category: ${category}
+Topic: ${topic}
+Difficulty: ${difficulty}
+
+Output JSON only:
+[
+  {
+    "question": "",
+    "options": { "a": "", "b": "", "c": "", "d": "" },
+    "answer": "a"
+  }
+]
+
+Rules:
+- Output only valid JSON.
+- No extra text.
+- Answer must be one of: a, b, c, or d.
+${instructions ? "Extra instructions: " + instructions : ""}
+`;
+
+// console.log("stage 2");
+// console.log("avilable modal ",await Client.models.list());
+
+    const resp=await Client.chat.completions.create({
+        model:"llama-3.1-8b-instant",
+        messages: [{ role: "user", content: prompt }],
+    })
+    // console.log("stage 3");
+    
+    const data=resp.choices[0].message.content
+    // console.log("ai gen quiestion -->>",JSON.parse(data));
+    const result=JSON.parse(data)
+    return result
+    
+}
+
+
+
+
 // export const getQuiz = (req, resp) => {
 //     const db = connection;
 //     const { selectedDiff } = req.params;
@@ -135,6 +203,9 @@ export const createQuiz = (req, resp) => {
 //         });
 //     });
 // };
+
+// create quize with ai  
+
 
 
 export const getQuiz = (req, resp) => {
@@ -1025,7 +1096,7 @@ export const recommendationQuiz = (req, resp) => {
                                 return finalList;
                             };
                             const recommended = getRecommendedQuizzes(userData);
-                            console.log("user sent this quize",recommended);
+                            // console.log("user sent this quize",recommended);
                             const categoryNames=recommended.map((q)=>q.category)
                             const difficultyList=recommended.map((q)=>q.level)                            
                            const getCatIdsSQL = `
@@ -1125,8 +1196,7 @@ db.query(getCatIdsSQL, [categoryNames], (err, catRows) => {
     });
 };
 
-
-// correct it get one category name id 
+// user interst topic not use and this value in aarray in future  
 
 // own write one by one step 
 // (Starting point of recommendation system)

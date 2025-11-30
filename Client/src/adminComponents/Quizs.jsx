@@ -75,13 +75,12 @@ const Quizs = ({ quizs }) => {
         <div>
 
             {/* all quize  */}
-            <div className="pt-20 px-8">
-                <h1 className="text-4xl font-bold mb-10 text-blue-700">All Quizzes</h1>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="pt-10 px-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {quizs?.map((quiz) => (
                         <div
                             key={quiz.id}
-                            className="relative bg-white shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl p-6 border border-gray-200"
+                            className="relative bg-white shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl p-4 border border-gray-200"
                         >
 
                             {/* THREE DOT MENU ICON */}
@@ -105,7 +104,7 @@ const Quizs = ({ quizs }) => {
 
                                 {/* DROPDOWN MENU */}
                                 {openMenuId === quiz.id && (
-                                    <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 shadow-lg rounded-xl animate-fadeIn">
+                                    <div className="absolute right-0 mt-2 w-32 text-sm bg-white border border-gray-200 shadow-lg rounded-xl animate-fadeIn">
                                         <button className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                                             onClick={() => {
                                                 setEditQuize(JSON.parse(JSON.stringify(quiz)));
@@ -141,12 +140,12 @@ const Quizs = ({ quizs }) => {
 
                             {/* CATEGORY INFO */}
                             <div className="text-gray-700 mb-5">
-                                <p>
+                                <p className="text-sm font-bold font">
                                     <span className="font-semibold">Category:</span>{" "}
                                     {quiz.category?.[0]?.category_name}
                                 </p>
 
-                                <p>
+                                <p className="text-sm font-bold font">
                                     <span className="font-semibold">Topic:</span>{" "}
                                     {quiz.category?.[0]?.topic_name}
                                 </p>
@@ -154,10 +153,10 @@ const Quizs = ({ quizs }) => {
 
                             {/* PLAY BUTTON */}
                             <button
-                                className="w-full mt-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all shadow-md"
+                                className="w-full mt-4 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all shadow-md"
                                 onClick={() => setPlayQuiz(quiz)}
                             >
-                                ▶ Play Quiz
+                                view
                             </button>
 
                         </div>
@@ -243,7 +242,7 @@ const Quizs = ({ quizs }) => {
 
            {/* EDIT QUIZ MODAL */}
 {editQuiz && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex text-sm items-center justify-center bg-black/50 backdrop-blur-sm">
         <div className="relative w-[95%] md:w-[70%] lg:w-[60%] h-[80vh] bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl shadow-2xl overflow-hidden">
 
             {/* Close button */}
