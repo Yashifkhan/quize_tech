@@ -75,8 +75,8 @@ const Quizs = ({ quizs }) => {
         <div>
 
             {/* all quize  */}
-            <div className="pt-10 px-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="pt-10">
+                <div className="grid grid-cols-4 md:grid-cols-3 gap-2">
                     {quizs?.map((quiz) => (
                         <div
                             key={quiz.id}

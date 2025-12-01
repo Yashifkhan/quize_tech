@@ -25,6 +25,110 @@ const AdminPage = () => {
 
 
 
+  //  const genrateWithAi = () => {
+  //   setLoading(true);
+  //   setTimeout(() => {
+  //     const mockQuestions = Array.from({ length: parseInt(count) || 3 }, (_, i) => ({
+  //       question: `Sample Question ${i + 1} about ${topic || 'General Knowledge'}?`,
+  //       options: {
+  //         a: 'Option A',
+  //         b: 'Option B',
+  //         c: 'Option C',
+  //         d: 'Option D'
+  //       },
+  //       answer: 'a'
+  //     }));
+  //     setAiQuestions(mockQuestions);
+  //     setLoading(false);
+  //   }, 2000);
+  // };
+
+  const handleQuestionEdit = (index, field, value) => {
+    const updated = [...aiQuestions];
+    updated[index][field] = value;
+    setAiQuestions(updated);
+  };
+
+  const handleOptionEdit = (qIndex, optionKey, value) => {
+    const updated = [...aiQuestions];
+    updated[qIndex].options[optionKey] = value;
+    setAiQuestions(updated);
+  };
+
+  const deleteQuestion = (index) => {
+    setAiQuestions(aiQuestions.filter((_, i) => i !== index));
+  };
+
+  const addNewQuestion = () => {
+    setAiQuestions([
+      ...aiQuestions,
+      {
+        question: 'New Question',
+        options: { a: 'Option A', b: 'Option B', c: 'Option C', d: 'Option D' },
+        answer: 'a'
+      }
+    ]);
+  };
+
+  const saveQuiz =async () => {
+    
+    // Category Data
+    const catagoryData = {
+      category_name: category,
+      topic_name: topic,
+      description: instructions || `${topic} quiz with ${difficulty} difficulty`
+    };
+
+    // Questions Data
+    const questionsData = aiQuestions.map(q => ({
+      question_text: q.question,
+      option_1: q.options.a,
+      option_2: q.options.b,
+      option_3: q.options.c,
+      option_4: q.options.d,
+      correct_option: q.answer.toUpperCase(),
+      difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1)
+    }));
+
+    const quizeData = {
+      title: `${topic} - ${difficulty} level`,
+      category: category,
+      difficulty: difficulty,
+      created_by:user.id
+    };
+
+    // console.log('categoryData:', categoryData);
+    // console.log('questionsData:', questionsData);
+    // console.log('quizData:', quizData);
+
+      // try {
+      const quize = { catagoryData, quizeData, questionsData }
+      console.log("quize data", quize);
+      const resp = await axios.post(`${BASE_URL}/create-quiz`, quize)
+      console.log("resp",resp);
+      
+      if (resp.data.success) {
+        alert("Quiz is created successfully")
+        // reset form (optional)
+        setCreateQuizeModal(false)
+        setcatagoryData({ category_name: '', topic_name: '', description: '' })
+        setQuizeData({ title: '', difficulty: '' })
+        setQuestionsData([{ ...blankQuestion }])
+        setActiveQuestionIndex(0)
+      } else {
+        alert('Failed to create quiz')
+      }
+    // } 
+    // catch (error) {
+    //   console.error("quize not create", error);
+    //   alert('Error creating quiz')
+    // }
+
+  //   console.log('Complete Quiz Data:', JSON.stringify(finalData, null, 2));
+  //   alert('Quiz saved! Check console for complete data.');
+  };
+
+  // if (!genrateQuizModal) return null;
 
 
   const menuItems = [
@@ -133,7 +237,9 @@ const AdminPage = () => {
   // get the quiz data 
   const fetchQuizs = async () => {
     try {
-      const resp = await axios.get(`${BASE_URL}/get-quizs-all`)
+            
+      const  selectedDiff ="all"
+      const resp = await axios.get(`${BASE_URL}/get-quizs-all`,{params:{selectedDiff:selectedDiff}})
       console.log("resp", resp);
 
       if (resp.data.success) {
@@ -212,14 +318,7 @@ const AdminPage = () => {
   }
 
   const genrateWithAi = async () => {
-    console.log("ai quiz genrater function call");
-
-    console.log("category", category);
-    console.log("count", count);
-    console.log("topic", topic);
-    console.log("difficulty", difficulty);
-    console.log("instructions", instructions);
-
+    setLoading(true)
     if (!category || !count || count >50 || !topic || !difficulty || !instructions) {
       return alert("all filds are required and count less then 50 ")
     } else {
@@ -230,15 +329,9 @@ const AdminPage = () => {
       if (resp.data.success === true) {
         setAiQuestions(resp.data.data)
       }
-
+      setLoading(false)
     }
-
-
-
-
-
-
-
+    setLoading(false)
   }
 
 console.log("aiQuestions",aiQuestions);
@@ -652,97 +745,216 @@ console.log("aiQuestions",aiQuestions);
             )}
 
             {genrateQuizModal && (
-              <div className="fixed inset-0 bg-black/30  text-sm bg-opacity-50 flex justify-center items-center z-50">
-                <div className="bg-white w-4/5 max-w-5xl rounded-xl shadow-xl flex overflow-hidden">
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden max-h-[90vh]">
+        
+        {/* Left Panel - Form */}
+        <div className="w-full md:w-2/5 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-r border-gray-200 text-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Create Quiz</h2>
+            <button
+              onClick={() => setGenrateQuizModal(false)}
+              className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+            >
+              <h1>X</h1>
+              {/* < className="w-5 h-5" /> */}
+            </button>
+          </div>
 
-                  {/* Left side: Form */}
-                  <div className="w-1/2 p-6 border-r">
-                    <h2 className="text-xl font-bold mb-4">Create Quiz with AI</h2>
-                    <form className="flex flex-col gap-4">
-                      <input
-                        type="text"
-                        placeholder="Category"
-                        className="border p-2 rounded"
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Topic"
-                        className="border p-2 rounded"
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                      />
-                      <select
-                        className="border p-2 rounded"
-                        value={difficulty}
-                        onChange={(e) => setDifficulty(e.target.value)}
-                      >
-                        <option value="">Select Difficulty</option>
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
-                      </select>
-                      <input
-                        type="number"
-                        placeholder="Number of Questions"
-                        className="border p-2 rounded"
-                        value={count}
-                        onChange={(e) => setCount(e.target.value)}
-                      />
-                      <textarea
-                        placeholder="Instructions for AI"
-                        className="border p-2 rounded"
-                        value={instructions}
-                        onChange={(e) => setInstructions(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-                        onClick={() => genrateWithAi()}
-                      >
-                        Generate Quiz
-                      </button>
-                    </form>
-                  </div>
+          <div className="flex flex-col gap-4 ">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-0">Category</label>
+              <input
+                type="text"
+                placeholder="e.g., Science, History"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              />
+            </div>
 
-                  {/* Right side: AI Results */}
-                  <div className="w-1/2 p-6 overflow-y-auto">
-                    <h2 className="text-xl font-bold mb-4">Generated Quiz</h2>
-                    {loading ? (
-                      <p>Loading...</p>
-                    ) :
-                      aiQuestions ? (
-                        <div className="space-y-4">
-                         {aiQuestions.map((q, idx) => (
-    <div key={idx} className="border p-3 rounded">
-      <p className="font-semibold">
-        {idx + 1}. {q.question}
-      </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-0">Topic</label>
+              <input
+                type="text"
+                placeholder="e.g., World War II"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+              />
+            </div>
 
-      <ul className="list-disc list-inside ml-2">
-  {Object.entries(q.options).map(([key, value]) => (
-    <li key={key}>
-      <strong>{key.toUpperCase()}.</strong> {value}
-    </li>
-  ))}
-</ul>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 ">Difficulty</label>
+              <select
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+              >
+                <option value="">Select Difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 ">Number of Questions</label>
+              <input
+                type="number"
+                placeholder="e.g., 10"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={count}
+                onChange={(e) => setCount(e.target.value)}
+                min="1"
+                max="50"
+              />
+            </div>
 
-      <p className="text-green-600 font-bold">
-        Answer: {q.answer}
-      </p>
-    </div>
-  ))}
-                        </div>
-                      )
-                        : (
-                          <p>No quiz generated yet.</p>
-                        )}
-                  </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 ">AI Instructions</label>
+              <textarea
+                placeholder="Special instructions for AI..."
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                rows="3"
+              />
+            </div>
 
+            <button
+              type="button"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={genrateWithAi}
+              disabled={loading}
+            >
+              {loading ? 'Generating...' : 'Generate Quiz with AI'}
+            </button>
+          </div>
+        </div>
+
+        {/* Right Panel - Generated Questions */}
+        <div className="w-full md:w-3/5 flex flex-col bg-white">
+          <div className="p-6 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800">
+                Generated Quiz
+                {aiQuestions.length > 0 && (
+                  <span className="ml-3 text-sm font-normal text-gray-500">
+                    ({aiQuestions.length} questions)
+                  </span>
+                )}
+              </h2>
+              {aiQuestions.length > 0 && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={addNewQuestion}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  >
+                    {/* <Plus className="w-4 h-4" /> */}
+                    Add Question
+                  </button>
+                  <button
+                    onClick={saveQuiz}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-lg"
+                  >
+                    {/* <Save className="w-4 h-4" /> */}
+                    Save Quiz
+                  </button>
                 </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                <p className="text-lg font-medium">AI is preparing your questions...</p>
               </div>
+            ) : aiQuestions.length > 0 ? (
+              <div className="space-y-6">
+                {aiQuestions.map((q, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white border-2 border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 group text-sm"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <span className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 font-bold rounded-full text-sm">
+                        {idx + 1}
+                      </span>
+                      <button
+                        onClick={() => deleteQuestion(idx)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        {/* <Trash2 className="w-4 h-4" /> */}
+                      </button>
+                    </div>
+
+                    {/* Question Input */}
+                    <div className="mb-4">
+                      <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+                        Question
+                      </label>
+                      <textarea
+                        value={q.question}
+                        onChange={(e) => handleQuestionEdit(idx, 'question', e.target.value)}
+                        className="w-full border-2 border-gray-200 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none font-medium text-gray-800"
+                        rows="2"
+                      />
+                    </div>
+
+                    {/* Options */}
+                    <div className="mb-4 space-y-3">
+                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        Options
+                      </label>
+                      {Object.entries(q.options).map(([key, value]) => (
+                        <div key={key} className="flex items-center gap-3">
+                          <span className="flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-700 font-bold rounded-lg text-sm flex-shrink-0">
+                            {key.toUpperCase()}
+                          </span>
+                          <input
+                            type="text"
+                            value={value}
+                            onChange={(e) => handleOptionEdit(idx, key, e.target.value)}
+                            className="flex-1 border-2 border-gray-200 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-gray-700"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Correct Answer */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+                        Correct Answer
+                      </label>
+                      <select
+                        value={q.answer}
+                        onChange={(e) => handleQuestionEdit(idx, 'answer', e.target.value)}
+                        className="w-full border-2 border-green-200 bg-green-50 p-3 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all font-medium text-green-700"
+                      >
+                        {Object.keys(q.options).map((key) => (
+                          <option key={key} value={key}>
+                            {key.toUpperCase()} - {q.options[key]}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                {/* <Edit2 className="w-16 h-16 mb-4" /> */}
+                <p className="text-lg font-medium">No quiz generated yet</p>
+                <p className="text-sm mt-2">Fill the form and click "Generate Quiz with AI"</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
             )}
 
 

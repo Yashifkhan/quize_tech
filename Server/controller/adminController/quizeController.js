@@ -19,7 +19,9 @@ export const createQuiz = (req, resp) => {
         (err, result) => {
 
             if (err) {
-                return resp.status(500).json({ message: "server error", success: false });
+                console.log("error stage 1",err);
+                
+                return resp.status(500).json({ message: "server error", success: false ,error:err});
             }
 
             const catDataId = result.insertId;
@@ -29,7 +31,9 @@ export const createQuiz = (req, resp) => {
                 (err, result2) => {
 
                     if (err) {
-                        return resp.status(500).json({ message: "server error", success: false });
+                        console.log("error stage 2",err);
+                        
+                        return resp.status(500).json({ message: "server error", success: false,error:err });
                     }
 
                     const quizId = result2.insertId;
@@ -61,7 +65,9 @@ export const createQuiz = (req, resp) => {
 
                                 if (err && !hasError) {
                                     hasError = true;
-                                    return resp.status(500).json({ message: "Error inserting question", success: false });
+                                    console.log("error stage 3");
+                                    
+                                    return resp.status(500).json({ message: "Error inserting question", success: false,error:err });
                                 }
 
                                 insertedCount++;
@@ -296,15 +302,15 @@ export const getQuiz = (req, resp) => {
 
 export const getAllQuizs = (req, resp) => {
     const db = connection;
-    // const { selectedDiff } = req.params || "hard"
-    const selectedDiff="hard"
+    const { selectedDiff } = req.query
+    // const selectedDiff="hard"
 
     const categorySQL = "SELECT * FROM category";
     db.query(categorySQL, (err, categories) => {
         if (err) {
             return resp.status(500).json({ message: "server error", success: false });
         }
-// console.log("selectedDiff",selectedDiff);
+console.log("selectedDiff",selectedDiff);
 
         let quizSQL = "SELECT * FROM quizs";
 
