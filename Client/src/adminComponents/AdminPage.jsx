@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useFetcher, useLocation } from 'react-router-dom';
 import Quizs from './Quizs';
 import TopHeader from '../components/TopHeader';
+import AdminDashboard from './AdminDashboard';
 // import { FaUserCircle } from "react-icons/fa";
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
@@ -402,44 +403,79 @@ console.log("aiQuestions",aiQuestions);
         ))}
       </div>
       {
-        activePage === "dashboard" && (
-          <div>
-            <h1 className='text-2xl px-60 py-20'>Main dashboard</h1>
-          </div>
-        )
+        activePage === "dashboard" && 
+         <AdminDashboard></AdminDashboard>
+        
       }
 
       {
         activePage === "quizzes" && (
-          <div className='text-2xl px-60 py-20'>
-            <h1> Quize Management</h1>
+         <div>
+           <div className='text-md text-bold pl-60 py-20'>
+{/* Quiz Management Header with Filters */}
+<div className="bg-white shadow rounded-lg p-4 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <h1 className="text-xl font-semibold">Quiz Management</h1>
 
-            <div className="fixed top-20 right-10 flex items-center gap-4 z-50">
+  <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+    <input
+      type="text"
+      placeholder="Search user..."
+      className="border px-3 py-1 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
+    />
+    <select className="border px-3 py-1 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+      <option>Select category</option>
+      <option>AI Quiz</option>
+      <option>Simple Quiz</option>
+    </select>
+    <input
+      type="date"
+      className="border px-3 py-1 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
+    />
+  </div>
+</div>
 
-              {/* Create Quiz simple  */}
-              <div
-                className="bg-green-600 text-white px-4 py-2 rounded-full shadow-lg 
-               hover:bg-green-700 cursor-pointer transition-all duration-300 
-               flex items-center gap-2"
-                onClick={() => addQuizfunction()}
-              >
-                <span className="text-sm font-bold">＋</span>
-                <span className="text-lg">Create Quiz</span>
-              </div>
+{/* Action Buttons */}
+<div className="relative ">
+  <div className="flex flex-wrap gap-4 justify-start md:justify-end items-center">
+    {/* Create Quiz Simple */}
+    <button
+      className="bg-green-600 text-white px-4 py-1 rounded-full shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2"
+      onClick={() => addQuizfunction()}
+    >
+      <span className="text-sm font-bold">＋</span>
+      <span>Create Quiz</span>
+    </button>
 
-              {/* Create Quiz with AI */}
-              <div
-                className="bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg 
-               hover:bg-blue-700 cursor-pointer transition-all duration-300
-               flex items-center gap-2"
-                onClick={() => addAIQuizfunction()}
-              >
-                <span className="text-sm font-bold">🤖</span>
-                <span className="text-lg">Create Quiz with AI</span>
-              </div>
+    {/* Create Quiz with AI */}
+    <button
+      className="bg-green-600 text-white px-4 py-1 rounded-full shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2"
+      onClick={() => addAIQuizfunction()}
+    >
+      <span className="text-sm font-bold">🤖</span>
+      <span>Create Quiz with AI</span>
+    </button>
 
-            </div>
+    {/* Import Excel */}
+    <button
+      className="bg-green-600 text-white px-4 py-1 rounded-full shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2"
+      onClick={() => alert("This Feature is coming soon")}
+    >
+      Import in Excel
+    </button>
 
+    {/* Create Quiz for Live */}
+    <button
+      className="bg-green-600 text-white px-4 py-1 rounded-full shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center gap-2"
+      onClick={() => alert("This Feature is coming soon")}
+    >
+      Quiz Create for Live
+    </button>
+  </div>
+</div>
+
+
+
+           
 
             {/* create quize simple  */}
             {createQuizeModal && (
@@ -957,14 +993,14 @@ console.log("aiQuestions",aiQuestions);
     </div>
             )}
 
-
             {/* show all quize  */}
-            <div>
               {
                 quizs?.length > 0 && <Quizs quizs={quizs}></Quizs>
               }
-            </div>
           </div>
+         </div>
+
+          
         )
       }
       {

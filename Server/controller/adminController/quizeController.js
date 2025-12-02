@@ -145,8 +145,6 @@ ${instructions ? "Extra instructions: " + instructions : ""}
 }
 
 
-
-
 // export const getQuiz = (req, resp) => {
 //     const db = connection;
 //     const { selectedDiff } = req.params;
@@ -1201,6 +1199,114 @@ db.query(getCatIdsSQL, [categoryNames], (err, catRows) => {
         });
     });
 };
+
+export const getDashBoardData=(req,resp)=>{
+    const db=connection
+    console.log("das fun call");
+    
+    const data={}
+    const getUser="select id from users where  NOT role = 'admin'"
+    db.query(getUser,(err,result)=>{
+        if(err) return resp.status(500).json({message:"server error" ,success:false,error:err})
+            console.log("result",result);
+        data.users=result.length
+        const totalQuiz="select id from quizs"
+        db.query(totalQuiz,(err,result)=>{
+        if(err) return resp.status(500).json({message:"server error" ,success:false,error:err})
+            console.log("total quize",result);
+        data.TotalQuizs=result.length
+        const mostAttempt="SELECT quiz_id, COUNT(*) AS total_attempts FROM quiz_attempts GROUP BY quiz_id ORDER BY total_attempts DESC LIMIT 1;"
+        db.query(mostAttempt,(err ,attempQuiz)=>{
+        if(err) return resp.status(500).json({message:"server error" ,success:false,error:err})
+            console.log("attempQuiz",attempQuiz);
+            
+            const quizeID=attempQuiz[0].quiz_id
+            const quizeInfo="select title from quizs where id=?"
+            db.query(quizeInfo,[quizeID],(err,result)=>{
+        if(err) return resp.status(500).json({message:"server error" ,success:false,error:err})
+console.log("quize title",result);
+        data.mostAttmptQuizs=result[0].title 
+        const getTotalAttempts="select id from quiz_attempts"
+        db.query(getTotalAttempts,(err,totalAttmp)=>{
+                    if(err) return resp.status(500).json({message:"server error" ,success:false,error:err})
+console.log("total attempts",totalAttmp);
+                    data.totalAttempts=totalAttmp.length
+
+                    
+const lastFiveQuizzesQuery = `
+  SELECT id, title, difficulty, category_id, created_at
+  FROM quizs
+  ORDER BY created_at DESC
+  LIMIT 5
+`;
+
+db.query(lastFiveQuizzesQuery, (err, lastFive) => {
+  if (err)
+    return resp
+      .status(500)
+      .json({ message: "server error", success: false, error: err });
+
+  // If no quiz found
+  if (lastFive.length === 0) {
+    data.lastFiveQuize = [];
+    return resp.status(200).json({
+      message: "dashboard data",
+      success: true,
+      data: data,
+    });
+  }
+
+  // Extract all category_ids
+  const catIds = lastFive.map((q) => q.category_id);
+
+  const getCat =
+    "SELECT id, category_name, topic_name FROM category WHERE id IN (?)";
+
+  db.query(getCat, [catIds], (err, catRows) => {
+    if (err)
+      return resp
+        .status(500)
+        .json({ message: "server error", success: false, error: err });
+
+    // Convert category results to quick lookup object
+    const catMap = {};
+    catRows.forEach((c) => {
+      catMap[c.id] = {
+        category_name: c.category_name,
+        topic_name: c.topic_name,
+      };
+    });
+
+    // Merge category data into quizzes
+    const finalLastFive = lastFive.map((quiz) => {
+      return {
+        ...quiz,
+        category_name: catMap[quiz.category_id]?.category_name || null,
+        topic_name: catMap[quiz.category_id]?.topic_name || null,
+      };
+    });
+
+    data.lastFiveQuize = finalLastFive;
+
+    return resp.status(200).json({
+      message: "dashboard data fetched successfully",
+      success: true,
+      data: data,
+    });
+  });
+});
+
+        })
+
+            })
+        })            
+
+        })
+            
+        }) 
+
+}
+
 
 // user interst topic not use and this value in aarray in future  
 

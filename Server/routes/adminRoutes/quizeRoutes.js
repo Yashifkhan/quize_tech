@@ -1,5 +1,5 @@
 import express from 'express'
-import { createQuiz, genrateQuize, getAllQuizs, getQuiz, getQuizCategoryTopicname, getReAttemptQuiz, recommendationQuiz, reviewQuiz, submitQuiz, updateQuiz } from '../../controller/adminController/quizeController.js'
+import { createQuiz, genrateQuize, getAllQuizs, getDashBoardData, getQuiz, getQuizCategoryTopicname, getReAttemptQuiz, recommendationQuiz, reviewQuiz, submitQuiz, updateQuiz } from '../../controller/adminController/quizeController.js'
 const quizeRoute =express.Router()
 
 quizeRoute.route('/create-quiz').post(createQuiz)
@@ -12,5 +12,5 @@ quizeRoute.route("/re-attempt-quiz/:userId/:quizId/:selectedReAtteQuiz").get(get
 quizeRoute.route("/get-quizs-all").get(getAllQuizs)
 quizeRoute.route("/recommendation-quiz/:userId").get(recommendationQuiz)
 quizeRoute.route("/genrate-quize").post(genrateQuize)
-
+quizeRoute.route("/get-dash-board-data").get(getDashBoardData)
 export default quizeRoute
