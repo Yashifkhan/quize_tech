@@ -37,6 +37,7 @@ const UserPage = () => {
   const [playOneVsOneModal,setPlayOneVsOneModal]=useState(false)
   const [liveAttemptModal,setLiveAttemptModal]=useState(false)
    const [mode, setMode] = useState("simple");
+   const [search,setSearch]=useState("")
 
 
 
@@ -82,11 +83,14 @@ const UserPage = () => {
 
   const getQuizs = async () => {
     try {
-      console.log("setSelectedDiff", selectedDiff);
-      console.log("userId", user.id);
+     console.log("search",search);
+     
       const userId = user.id
-      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`,{params:{category:selectCat,topic:selectedTopic}})
+      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`,{params:{category:selectCat,topic:selectedTopic,search:search}})
       console.log("getquize resp", resp?.data?.data);
+      const result=resp?.data?.data
+      
+      
       if (resp?.data?.success) {
         setQuizes(resp.data.data)
       }
@@ -101,7 +105,7 @@ const UserPage = () => {
   }
   useEffect(() => {
     getQuizs()
-  }, [selectedDiff,selectCat,selectedTopic])
+  }, [selectedDiff,selectCat,selectedTopic,search])
 
 
   useEffect(() => {
@@ -238,6 +242,10 @@ const UserPage = () => {
     setLiveAttemptModal(true)
   }
 
+  const handleSearch=(e)=>{
+    setSearch(e.target.value)
+
+  }
 
 
 
@@ -402,15 +410,22 @@ const UserPage = () => {
 
 
       {/* all quize  */}
-      <div className="pt-10 px-8">
-        <div className="flex justify-between">
-          <h1 className="text-2xl font-bold mb-3 text-blue-700">All Quizzes</h1>
+      <div className="pt-6 px-8">
+        <div className="flex justify-between items-center p-3 border-amber-50 shadow-sm mb-4">
+          <h1 className="text-xl font-bold text-black">All Quizzes</h1>
           {/* Filter for search quiz */}
           <div className="flex items-center gap-3 p-2">
 
+            {/* search bar  */}
+           <div className="flex items-center ">
+             <input type="text" className=" border p-1 shadow-xs border-gray-100 rounded-lg w-40"  placeholder="search quize"
+             onChange={(e)=>handleSearch(e)}
+             />
+           </div>
+
             {/* Difficulty */}
             <select
-              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setSelectedDiff(e.target.value)}
             >
               <option value="all">Select Difficulty</option>
@@ -421,7 +436,7 @@ const UserPage = () => {
 
             {/* Category (data will come from loop) */}
             <select
-              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1 border rounded-lg focus:outline-none w-40 focus:ring-2 focus:ring-blue-500"
              onChange={(e)=>setSelectCat(e.target.value)}
             >
               <option value="">Select Category</option>
@@ -429,20 +444,27 @@ const UserPage = () => {
               {categoryTopic?.map((t) => (
                 <option key={t.id} value={t.category_name}>{t.category_name}</option>
               ))}
+              
             </select>
 
             {/* Topic (data will come from loop) */}
-            <select
-              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-             onChange={(e)=>setSelectedTopic(e.target.value)}
-             >
-              <option value="">Select Topic</option>
-              {/* Example dynamic */}
-              {categoryTopic?.map((cat) => (
-                <option key={cat.id} value={cat.topic_name}>{cat.topic_name}</option>
-              ))}
+      <select
+  className="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+  onChange={(e) => setSelectedTopic(e.target.value)}
+>
+  <option value="">Select Topic</option>
 
-            </select>
+  {
+    quizs?.length > 0 && quizs?.map((t) => (
+    <option key={t.id} value={t?.category?.[0]?.topic_name}>
+      {t?.category?.[0]?.topic_name}
+    </option>
+  ))}
+  
+
+</select>
+
+
 
             <div className="flex justify-center">
             <div className="bg-gray-200 p-1 rounded-full flex gap-1 shadow-inner">
@@ -451,7 +473,7 @@ const UserPage = () => {
                 <button
                     onClick={() => handleSelect("simple")}
                     className={`
-                        px-5 py-2 rounded-full text-sm font-medium transition-all
+                        px-5 py-1 rounded-full text-sm font-medium transition-all
                         ${mode === "simple"
                             ? "bg-white shadow text-blue-600"
                             : "text-gray-600"}
@@ -464,7 +486,7 @@ const UserPage = () => {
                 <button
                     onClick={() => handleSelect("ai")}
                     className={`
-                        px-5 py-2 rounded-full text-sm font-medium transition-all
+                        px-5 py-1 rounded-full text-sm font-medium transition-all
                         ${mode === "ai"
                             ? "bg-white shadow text-purple-600"
                             : "text-gray-600"}
@@ -478,24 +500,26 @@ const UserPage = () => {
 
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-2xl ">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 ">
         {
           quizs?.length >0 ?
             
            quizs?.map((quiz) => (
             <div
               key={quiz.id}
-              className="relative bg-white shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl p-6 border border-gray-200"
+              className="relative bg-white shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl p-6
+            "
+            
             >
 
               {/* QUIZ HEADER */}
-              <div className="flex justify-between items-center mb-4 pr-10">
-                <h2 className="text-2xl font-bold text-gray-900">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-md font-bold text-gray-900">
                   {quiz.title}
                 </h2>
 
                 <span
-                  className={`px-4 py-1 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
+                  className={`px-4 py-.5 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
                     ? "bg-green-600"
                     : quiz.difficulty === "medium"
                       ? "bg-yellow-600"
@@ -509,12 +533,12 @@ const UserPage = () => {
               {/* CATEGORY INFO */}
               <div className="text-gray-700 mb-5">
                 <p>
-                  <span className="font-semibold">Category:</span>{" "}
+                  <span className="font-semibold text-sm">Category:</span>{" "}
                   {quiz.category?.[0]?.category_name}
                 </p>
 
                 <p>
-                  <span className="font-semibold">Topic:</span>{" "}
+                  <span className="font-semibold text-sm">Topic:</span>{" "}
                   {quiz.category?.[0]?.topic_name}
                 </p>
               </div>
@@ -523,7 +547,7 @@ const UserPage = () => {
               <div className=" flex gap-2">
                 {
                   quiz.isAttempted === true ?
-                    <button className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all shadow-md"
+                    <button className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
                       onClick={() => reAttemptQuizFunction(quiz.id)}
                     >
                       Re-Attempt
@@ -531,7 +555,7 @@ const UserPage = () => {
                     : ""
                 }
                 <button
-                  className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all shadow-md"
+                  className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
                   onClick={() => playQuizFunction(quiz)}
                 >
                   ▶ Play Quiz

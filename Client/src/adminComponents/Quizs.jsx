@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useState } from "react";
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
-const Quizs = ({ quizs }) => {
+const Quizs = ({ quizs ,fetchQuizs }) => {
     const [openMenuId, setOpenMenuId] = useState(null);
     const [playQuiz, setPlayQuiz] = useState(null)
     const [editQuiz, setEditQuize] = useState(null)
@@ -63,7 +63,12 @@ const Quizs = ({ quizs }) => {
             const questionsData=changedQuestions
 
             const resp=await axios.post(`${BASE_URL}/update-quiz`, {quiz_id,quizeData,catagoryData,questionsData})
-            console.log("resp of update the quize",resp);
+            if(resp.data.success){
+              alert("quize is updated succesully")
+              setEditQuize(null)
+              fetchQuizs()
+
+            }
             
         } catch (error) {
             

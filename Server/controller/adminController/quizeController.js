@@ -215,8 +215,10 @@ ${instructions ? "Extra instructions: " + instructions : ""}
 export const getQuiz = (req, resp) => {
     const db = connection;
     const { selectedDiff, userId } = req.params;
-    const { topic = "all", category = "all" } = req.query;
+    const { topic = "all", category = "all",search='' } = req.query;
 
+    console.log("search",search);
+    
     const categorySQL = "SELECT * FROM category";
 
     db.query(categorySQL, (err, categories) => {
@@ -230,9 +232,13 @@ export const getQuiz = (req, resp) => {
 
         // Category filter (convert category name → category id)
         if (category !== "all") {
-            const catObj = categories.find(c => c.category_name === category);
+            // console.log("category",categories);
+            
+            const catObj = categories.filter(c => c.category_name === category);
+            console.log("obj",catObj);
+            
             if (catObj) {
-                quizSQL += ` AND category_id = ${catObj.id}`;
+                quizSQL += ` AND category_id in (${catObj.map((cat)=>cat.id)})`;
             }
         }
 
@@ -243,6 +249,10 @@ export const getQuiz = (req, resp) => {
                 quizSQL += ` AND category_id = ${topicObj.id}`;
             }
         }
+      if (search) {
+    quizSQL += ` AND title LIKE '%${search}%'`;
+}
+
 
         db.query(quizSQL, (err, quizzes) => {
             if (err) {
@@ -933,10 +943,21 @@ export const reviewQuiz = (req, resp) => {
 
 export const getQuizCategoryTopicname = (req, resp) => {
     const db = connection
-    const sql = "SELECT id ,category_name,topic_name from category"
+    const sql = "SELECT id ,category_name from category"
     db.query(sql, (err, result) => {
         if (err) return resp.status(500).json({ message: "server eror " })
-        resp.status(200).json({ message: "get quize for filter", data: result, success: true })
+            const categoryNames=result.map((c)=>c.category_name)
+        const uniqeResult= result.filter(
+  (item, index, arr) =>
+    index === arr.findIndex(x => x.category_name === item.category_name)
+);
+        
+        
+        console.log(result);
+        
+        console.log("uniq result",uniqeResult);
+        
+        resp.status(200).json({ message: "get quize for filter", data: uniqeResult, success: true })
     })
 }
 

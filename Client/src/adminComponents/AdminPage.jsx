@@ -995,7 +995,7 @@ console.log("aiQuestions",aiQuestions);
 
             {/* show all quize  */}
               {
-                quizs?.length > 0 && <Quizs quizs={quizs}></Quizs>
+                quizs?.length > 0 && <Quizs quizs={quizs} fetchQuizs={fetchQuizs}></Quizs>
               }
           </div>
          </div>
