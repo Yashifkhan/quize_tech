@@ -2,11 +2,12 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { data, useLocation, useNavigate } from "react-router-dom";
 import TopHeader from "../components/TopHeader";
+import Pagination from "../components/Pagination";
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
 const UserPage = () => {
-    const naviagat = useNavigate()
+  const naviagat = useNavigate()
 
 
   // states 
@@ -32,69 +33,68 @@ const UserPage = () => {
   const [reAttemptModal, setReAttemptModal] = useState(false)
   const [reAttemptQuizeData, setReAttemptQuizeData] = useState(null)
   const [showQuestionModal, setShowQuestionModal] = useState(false)
-  const [selectCat,setSelectCat]=useState("all")
-  const [selectedTopic,setSelectedTopic]=useState("all")
-  const [playOneVsOneModal,setPlayOneVsOneModal]=useState(false)
-  const [liveAttemptModal,setLiveAttemptModal]=useState(false)
-   const [mode, setMode] = useState("simple");
-   const [search,setSearch]=useState("")
+  const [selectCat, setSelectCat] = useState("all")
+  const [selectedTopic, setSelectedTopic] = useState("all")
+  const [playOneVsOneModal, setPlayOneVsOneModal] = useState(false)
+  const [liveAttemptModal, setLiveAttemptModal] = useState(false)
+  const [mode, setMode] = useState("simple");
+  const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(2);
+  const [totalPages, setTotalPages] = useState(1);
 
 
-
-   const handleSelect = (selected) => {
-        // setMode(selected);
-        if (mode === "simple") {
-    setMode("ai");
-    recommendationQuiz();    // load AI quizzes
-  } else {
-    setMode("simple");
-    getQuizs();              // load simple quizzes
-  }
-    };
-
-
+  const handleSelect = (selected) => {
+    if (mode === "simple") {
+      setMode("ai");
+      recommendationQuiz();    // load AI quizzes
+    } else {
+      setMode("simple");
+      getQuizs();              // load simple quizzes
+    }
+  };
 
   // (Starting point of recommendation system)
-  const recommendationQuiz=async()=>{
-    const userId=user.id
-    if(!userId){
+  const recommendationQuiz = async () => {
+    const userId = user.id
+    if (!userId) {
       alert("id is required")
-    }else{
-      const resp=await axios.get(`${BASE_URL}/recommendation-quiz/${userId}`)
-      console.log("resp of recomandation quiz",resp);
-      console.log("mode value -->>>",mode);
-    if (resp.data.success === true) {
+    } else {
+      const resp = await axios.get(`${BASE_URL}/recommendation-quiz/${userId}`)
+      console.log("resp of recomandation quiz", resp);
+      console.log("mode value -->>>", mode);
+      if (resp.data.success === true) {
 
-    if (mode === "ai") {
-        console.log("AI mode active");
-        setQuizes(resp.data.data);
-    }
+        if (mode === "ai") {
+          console.log("AI mode active");
+          setQuizes(resp.data.data);
+        }
 
-    
-}
 
-      
+      }
+
+
     }
   }
-  useEffect(()=>{
+  useEffect(() => {
     recommendationQuiz()
-  },[user,mode])
+  }, [user, mode])
 
 
   const getQuizs = async () => {
     try {
-     console.log("search",search);
-     
+      console.log("search", search);
       const userId = user.id
-      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`,{params:{category:selectCat,topic:selectedTopic,search:search}})
+      const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`,
+        { params: { category: selectCat, topic: selectedTopic, search: debouncedSearch, page, limit } })
       console.log("getquize resp", resp?.data?.data);
-      const result=resp?.data?.data
-      
-      
+      const result = resp?.data?.data
       if (resp?.data?.success) {
         setQuizes(resp.data.data)
+        setTotalPages(resp.data.totalPages);
       }
-      else if(mode === "simple"){
+      else if (mode === "simple") {
         setQuizes(resp.data.data)
       }
     } catch (error) {
@@ -103,10 +103,6 @@ const UserPage = () => {
 
     }
   }
-  useEffect(() => {
-    getQuizs()
-  }, [selectedDiff,selectCat,selectedTopic,search])
-
 
   useEffect(() => {
     if (!isRunning || !startTime) return;
@@ -234,20 +230,29 @@ const UserPage = () => {
 
 
 
-  const playOneVsOneFunction=()=>{
+  const playOneVsOneFunction = () => {
     setPlayOneVsOneModal(true)
   }
 
-  const playAttemptFunction=()=>{
+  const playAttemptFunction = () => {
     setLiveAttemptModal(true)
   }
 
-  const handleSearch=(e)=>{
-    setSearch(e.target.value)
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+  };
 
-  }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
 
+    return () => clearTimeout(timer);
+  }, [search]);
 
+  useEffect(() => {
+    getQuizs();   // call API only when debounced value changes
+  }, [debouncedSearch, selectedDiff, selectCat, selectedTopic, page]);
 
 
   const submitPlayQuiz = async () => {
@@ -305,7 +310,7 @@ const UserPage = () => {
 
 
 
-  
+
 
   return (
     <>
@@ -320,9 +325,9 @@ const UserPage = () => {
         {/* Right Section */}
         <div className="flex items-center gap-4">
 
-   <button
-  onClick={() => playAttemptFunction()}
-  className="
+          <button
+            onClick={() => playAttemptFunction()}
+            className="
     flex items-center justify-center gap-2 
     bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600
     text-white font-semibold px-5 py-2.5
@@ -332,12 +337,12 @@ const UserPage = () => {
     active:scale-95
     tracking-wide text-sm
   "
->
-  <span className="font-medium">Live Attempt</span>
-</button>
+          >
+            <span className="font-medium">Live Attempt</span>
+          </button>
 
           <button
-  className="
+            className="
     flex items-center justify-center gap-2 
     bg-gradient-to-r from-purple-600 to-indigo-600
     text-white font-semibold px-4 py-2 
@@ -346,10 +351,10 @@ const UserPage = () => {
     hover:shadow-xl hover:scale-105 
     active:scale-95
   "
-  onClick={()=>playOneVsOneFunction()}
->
-  <span className="text-sm tracking-wide">Play 1 V/S 1</span>
-</button>
+            onClick={() => playOneVsOneFunction()}
+          >
+            <span className="text-sm tracking-wide">Play 1 V/S 1</span>
+          </button>
 
 
           {/* Coins */}
@@ -392,7 +397,7 @@ const UserPage = () => {
 
 
             <button
-              onClick={() =>{naviagat('/login')} }
+              onClick={() => { naviagat('/login') }}
               className="mt-6 bg-gray-900 text-white w-full py-2 rounded-lg hover:bg-gray-700 transition"
             >
               Logout
@@ -417,11 +422,11 @@ const UserPage = () => {
           <div className="flex items-center gap-3 p-2">
 
             {/* search bar  */}
-           <div className="flex items-center ">
-             <input type="text" className=" border p-1 shadow-xs border-gray-100 rounded-lg w-40"  placeholder="search quize"
-             onChange={(e)=>handleSearch(e)}
-             />
-           </div>
+            <div className="flex items-center ">
+              <input type="text" className=" border p-1  text-sm shadow-xs border-gray-100 rounded-lg w-40" placeholder="search quize"
+                onChange={(e) => handleSearch(e)}
+              />
+            </div>
 
             {/* Difficulty */}
             <select
@@ -437,141 +442,151 @@ const UserPage = () => {
             {/* Category (data will come from loop) */}
             <select
               className="px-3 py-1 border rounded-lg focus:outline-none w-40 focus:ring-2 focus:ring-blue-500"
-             onChange={(e)=>setSelectCat(e.target.value)}
+              onChange={(e) => setSelectCat(e.target.value)}
             >
               <option value="">Select Category</option>
               {/* Example dynamic */}
               {categoryTopic?.map((t) => (
                 <option key={t.id} value={t.category_name}>{t.category_name}</option>
               ))}
-              
+
             </select>
 
             {/* Topic (data will come from loop) */}
-      <select
-  className="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-  onChange={(e) => setSelectedTopic(e.target.value)}
->
-  <option value="">Select Topic</option>
+            <select
+              className="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              onChange={(e) => setSelectedTopic(e.target.value)}
+            >
+              <option value="">Select Topic</option>
 
-  {
-    quizs?.length > 0 && quizs?.map((t) => (
-    <option key={t.id} value={t?.category?.[0]?.topic_name}>
-      {t?.category?.[0]?.topic_name}
-    </option>
-  ))}
-  
+              {
+                quizs?.length > 0 && quizs?.map((t) => (
+                  <option key={t.id} value={t?.category?.[0]?.topic_name}>
+                    {t?.category?.[0]?.topic_name}
+                  </option>
+                ))}
 
-</select>
+
+            </select>
 
 
 
             <div className="flex justify-center">
-            <div className="bg-gray-200 p-1 rounded-full flex gap-1 shadow-inner">
+              <div className="bg-gray-200 p-1 rounded-full flex gap-1 shadow-inner">
 
                 {/* SIMPLE */}
                 <button
-                    onClick={() => handleSelect("simple")}
-                    className={`
+                  onClick={() => handleSelect("simple")}
+                  className={`
                         px-5 py-1 rounded-full text-sm font-medium transition-all
                         ${mode === "simple"
-                            ? "bg-white shadow text-blue-600"
-                            : "text-gray-600"}
+                      ? "bg-white shadow text-blue-600"
+                      : "text-gray-600"}
                     `}
                 >
-                    Simple
+                  Simple
                 </button>
 
                 {/* AI RECOMMENDED */}
                 <button
-                    onClick={() => handleSelect("ai")}
-                    className={`
+                  onClick={() => handleSelect("ai")}
+                  className={`
                         px-5 py-1 rounded-full text-sm font-medium transition-all
                         ${mode === "ai"
-                            ? "bg-white shadow text-purple-600"
-                            : "text-gray-600"}
+                      ? "bg-white shadow text-purple-600"
+                      : "text-gray-600"}
                     `}
                 >
-                    AI Recommended
+                  AI Recommended
                 </button>
 
+              </div>
             </div>
-        </div>
 
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 ">
-        {
-          quizs?.length >0 ?
-            
-           quizs?.map((quiz) => (
-            <div
-              key={quiz.id}
-              className="relative bg-white shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl p-6
+        <div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 ">
+            {quizs?.length > 0 ?
+              quizs?.map((quiz) => (
+                <div
+                  key={quiz.id}
+                  className="relative bg-white shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl p-6
             "
-            
-            >
-
-              {/* QUIZ HEADER */}
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-md font-bold text-gray-900">
-                  {quiz.title}
-                </h2>
-
-                <span
-                  className={`px-4 py-.5 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
-                    ? "bg-green-600"
-                    : quiz.difficulty === "medium"
-                      ? "bg-yellow-600"
-                      : "bg-red-600"
-                    }`}
                 >
-                  {quiz.difficulty}
-                </span>
-              </div>
 
-              {/* CATEGORY INFO */}
-              <div className="text-gray-700 mb-5">
-                <p>
-                  <span className="font-semibold text-sm">Category:</span>{" "}
-                  {quiz.category?.[0]?.category_name}
-                </p>
+                  {/* QUIZ HEADER */}
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-md font-bold text-gray-900">
+                      {quiz.title}
+                    </h2>
 
-                <p>
-                  <span className="font-semibold text-sm">Topic:</span>{" "}
-                  {quiz.category?.[0]?.topic_name}
-                </p>
-              </div>
-
-              {/*Action BUTTON */}
-              <div className=" flex gap-2">
-                {
-                  quiz.isAttempted === true ?
-                    <button className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
-                      onClick={() => reAttemptQuizFunction(quiz.id)}
+                    <span
+                      className={`px-4 py-.5 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
+                        ? "bg-green-600"
+                        : quiz.difficulty === "medium"
+                          ? "bg-yellow-600"
+                          : "bg-red-600"
+                        }`}
                     >
-                      Re-Attempt
+                      {quiz.difficulty}
+                    </span>
+                  </div>
+
+                  {/* CATEGORY INFO */}
+                  <div className="text-gray-700 mb-5">
+                    <p>
+                      <span className="font-semibold text-sm">Category:</span>{" "}
+                      {quiz.category?.[0]?.category_name}
+                    </p>
+
+                    <p>
+                      <span className="font-semibold text-sm">Topic:</span>{" "}
+                      {quiz.category?.[0]?.topic_name}
+                    </p>
+                  </div>
+
+                  {/*Action BUTTON */}
+                  <div className=" flex gap-2">
+                    {
+                      quiz.isAttempted === true ?
+                        <button className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
+                          onClick={() => reAttemptQuizFunction(quiz.id)}
+                        >
+                          Re-Attempt
+                        </button>
+                        : ""
+                    }
+                    <button
+                      className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
+                      onClick={() => playQuizFunction(quiz)}
+                    >
+                      ▶ Play Quiz
                     </button>
-                    : ""
-                }
-                <button
-                  className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
-                  onClick={() => playQuizFunction(quiz)}
-                >
-                  ▶ Play Quiz
-                </button>
 
-              </div>
+                  </div>
 
-            </div>
 
-            
-          ))
 
-          : <h1 className="text-red-500">
-            No Data Found
-          </h1>
-        }
+                </div>
+
+
+
+              ))
+
+              : <h1 className="text-red-500">
+                No Data Found
+              </h1>
+            }
+          </div>
+
+          <div className="fixed bottom-6 right-6 z-50">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
+            ></Pagination>
+          </div>
         </div>
 
 
@@ -1024,202 +1039,199 @@ const UserPage = () => {
 
 
       {/* re-attempt-modal  */}
-      {
-        reAttemptModal === true && reAttemptQuizeData ?
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+      {reAttemptModal === true && reAttemptQuizeData ?
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
 
-              {/* Close Button */}
-              <button
-                onClick={() => setReAttemptModal(false)}
-                className="absolute top-3 right-3 text-gray-600 hover:text-black"
-              >
-                ✕
-              </button>
+            {/* Close Button */}
+            <button
+              onClick={() => setReAttemptModal(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-black"
+            >
+              ✕
+            </button>
 
-              <h1 className="text-xl font-semibold mb-4">
-                Attempted Quiz Review
-              </h1>
+            <h1 className="text-xl font-semibold mb-4">
+              Attempted Quiz Review
+            </h1>
 
-              {/* Total Attempt */}
-              <div className="space-y-3">
-                <h4 className="font-medium">
-                  Total Attempt: {reAttemptQuizeData.totalAttempt}
-                </h4>
+            {/* Total Attempt */}
+            <div className="space-y-3">
+              <h4 className="font-medium">
+                Total Attempt: {reAttemptQuizeData.totalAttempt}
+              </h4>
 
-                {/* Attempt Buttons */}
-                <div className="flex flex-wrap gap-2">
-                  {totalAttmpt.map((q, index) => (
-                    <button
-                      key={index}
-                      className="px-3 py-1 bg-green-500 text-white rounded-md"
-                      onClick={() => selectedReAttFunction(q, reAttemptQuizeData.quiz_id)}
-                    >
-                      {q}
-                    </button>
-                  ))}
+              {/* Attempt Buttons */}
+              <div className="flex flex-wrap gap-2">
+                {totalAttmpt.map((q, index) => (
+                  <button
+                    key={index}
+                    className="px-3 py-1 bg-green-500 text-white rounded-md"
+                    onClick={() => selectedReAttFunction(q, reAttemptQuizeData.quiz_id)}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+
+              {/* Score Overview */}
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between">
+                  <h2 className="text-lg font-semibold mb-2 cursor-pointer" onClick={() => setShowQuestionModal(false)}>Score Overview</h2>
+                  <h2 className="text-red-500 font-bold cursor-pointer" onClick={() => setShowQuestionModal(true)}>Show Questions</h2>
                 </div>
 
-                {/* Score Overview */}
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between">
-                    <h2 className="text-lg font-semibold mb-2 cursor-pointer" onClick={() => setShowQuestionModal(false)}>Score Overview</h2>
-                    <h2 className="text-red-500 font-bold cursor-pointer" onClick={() => setShowQuestionModal(true)}>Show Questions</h2>
-                  </div>
+                {
+                  showQuestionModal === true ?
+                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
 
-                  {
-                    showQuestionModal === true ?
-                      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                      {reAttemptQuizeData.questions?.map((q, i) => {
+                        const attempt = reAttemptQuizeData.quizAns?.find(
+                          (a) => a.question_id === q.id
+                        );
 
-                        {reAttemptQuizeData.questions?.map((q, i) => {
-                          const attempt = reAttemptQuizeData.quizAns?.find(
-                            (a) => a.question_id === q.id
-                          );
+                        const userAns = attempt?.user_answer || null;
+                        const correct = attempt?.correct_answer || q.correct_option;
 
-                          const userAns = attempt?.user_answer || null;
-                          const correct = attempt?.correct_answer || q.correct_option;
+                        return (
+                          <div key={q.id} className="border p-4 rounded-md space-y-2">
+                            <p className="font-medium">{i + 1}. {q.question_text}</p>
 
-                          return (
-                            <div key={q.id} className="border p-4 rounded-md space-y-2">
-                              <p className="font-medium">{i + 1}. {q.question_text}</p>
+                            {/* OPTIONS */}
+                            <div className="space-y-1">
+                              {["a", "b", "c", "d"].map((opt) => {
+                                const optionText =
+                                  q[`option_${opt === "a" ? 1 : opt === "b" ? 2 : opt === "c" ? 3 : 4}`];
 
-                              {/* OPTIONS */}
-                              <div className="space-y-1">
-                                {["a", "b", "c", "d"].map((opt) => {
-                                  const optionText =
-                                    q[`option_${opt === "a" ? 1 : opt === "b" ? 2 : opt === "c" ? 3 : 4}`];
+                                if (!optionText) return null;
 
-                                  if (!optionText) return null;
+                                const isCorrect = opt === correct;
+                                const isUserWrong = userAns === opt && opt !== correct;
 
-                                  const isCorrect = opt === correct;
-                                  const isUserWrong = userAns === opt && opt !== correct;
-
-                                  return (
-                                    <div
-                                      key={opt}
-                                      className={`p-2 rounded-md 
+                                return (
+                                  <div
+                                    key={opt}
+                                    className={`p-2 rounded-md 
                   ${isCorrect ? "bg-green-200" : ""}
                   ${isUserWrong ? "bg-red-200" : ""}
                 `}
-                                    >
-                                      {opt}) {optionText}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              {/* ANSWER SUMMARY */}
-                              <div className="text-sm font-semibold">
-                                <p>Your Answer: {userAns ? userAns.toUpperCase() : "Not Attempted"}</p>
-                                <p>Correct Answer: {correct.toUpperCase()}</p>
-                              </div>
+                                  >
+                                    {opt}) {optionText}
+                                  </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })}
+
+                            {/* ANSWER SUMMARY */}
+                            <div className="text-sm font-semibold">
+                              <p>Your Answer: {userAns ? userAns.toUpperCase() : "Not Attempted"}</p>
+                              <p>Correct Answer: {correct.toUpperCase()}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    :
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+
+                      <div className="p-3 bg-gray-100 rounded-md">
+                        <p className="font-medium">Score</p>
+                        <p>{reAttemptQuizeData.score} / {reAttemptQuizeData.total_questions}</p>
                       </div>
 
-                      :
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-
-                        <div className="p-3 bg-gray-100 rounded-md">
-                          <p className="font-medium">Score</p>
-                          <p>{reAttemptQuizeData.score} / {reAttemptQuizeData.total_questions}</p>
-                        </div>
-
-                        <div className="p-3 bg-gray-100 rounded-md">
-                          <p className="font-medium">Correct</p>
-                          <p>{reAttemptQuizeData.correct_answers}</p>
-                        </div>
-
-                        <div className="p-3 bg-gray-100 rounded-md">
-                          <p className="font-medium">Wrong</p>
-                          <p>{reAttemptQuizeData.wrong_answers}</p>
-                        </div>
-
-                        <div className="p-3 bg-gray-100 rounded-md">
-                          <p className="font-medium">Unattempted</p>
-                          <p>{reAttemptQuizeData.total_unattempted}</p>
-                        </div>
-
-                        <div className="p-3 bg-gray-100 rounded-md">
-                          <p className="font-medium">Accuracy</p>
-                          <p>{reAttemptQuizeData.accuracy}%</p>
-                        </div>
-
-                        <div className="p-3 bg-gray-100 rounded-md">
-                          <p className="font-medium">Percentage</p>
-                          <p>{reAttemptQuizeData.percentage}%</p>
-                        </div>
-
-                        <div className="p-3 bg-gray-100 rounded-md">
-                          <p className="font-medium">Rank</p>
-                          <p>{reAttemptQuizeData.rank}</p>
-                        </div>
-
-                        <div className="p-3 bg-gray-100 rounded-md">
-                          <p className="font-medium">Time Taken</p>
-                          <p>{reAttemptQuizeData.time_taken}</p>
-                        </div>
-
+                      <div className="p-3 bg-gray-100 rounded-md">
+                        <p className="font-medium">Correct</p>
+                        <p>{reAttemptQuizeData.correct_answers}</p>
                       </div>
-                  }
 
-                </div>
+                      <div className="p-3 bg-gray-100 rounded-md">
+                        <p className="font-medium">Wrong</p>
+                        <p>{reAttemptQuizeData.wrong_answers}</p>
+                      </div>
+
+                      <div className="p-3 bg-gray-100 rounded-md">
+                        <p className="font-medium">Unattempted</p>
+                        <p>{reAttemptQuizeData.total_unattempted}</p>
+                      </div>
+
+                      <div className="p-3 bg-gray-100 rounded-md">
+                        <p className="font-medium">Accuracy</p>
+                        <p>{reAttemptQuizeData.accuracy}%</p>
+                      </div>
+
+                      <div className="p-3 bg-gray-100 rounded-md">
+                        <p className="font-medium">Percentage</p>
+                        <p>{reAttemptQuizeData.percentage}%</p>
+                      </div>
+
+                      <div className="p-3 bg-gray-100 rounded-md">
+                        <p className="font-medium">Rank</p>
+                        <p>{reAttemptQuizeData.rank}</p>
+                      </div>
+
+                      <div className="p-3 bg-gray-100 rounded-md">
+                        <p className="font-medium">Time Taken</p>
+                        <p>{reAttemptQuizeData.time_taken}</p>
+                      </div>
+
+                    </div>
+                }
+
               </div>
-
             </div>
+
           </div>
-          : ""
+        </div>
+        : ""
       }
 
 
-      {
-      playOneVsOneModal === true && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+      {playOneVsOneModal === true && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
 
-              {/* Close Button */}
-              <button
-                onClick={() => setPlayOneVsOneModal(false)}
-                className="absolute top-3 right-3 text-gray-600 hover:text-black"
-              >
-                ✕
-              </button>
+            {/* Close Button */}
+            <button
+              onClick={() => setPlayOneVsOneModal(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-black"
+            >
+              ✕
+            </button>
 
-               <div>
-          <h1>Play One V/s One </h1>
-          <p>This feature are Comming Soon</p>
+            <div>
+              <h1>Play One V/s One </h1>
+              <p>This feature are Comming Soon</p>
+            </div>
+
+          </div>
+
         </div>
-
-              </div>
-
-              </div>
 
       )
       }
 
 
-{
-      liveAttemptModal === true && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+      {liveAttemptModal === true && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
 
-              {/* Close Button */}
-              <button
-                onClick={() => setLiveAttemptModal(false)}
-                className="absolute top-3 right-3 text-gray-600 hover:text-black"
-              >
-                ✕
-              </button>
+            {/* Close Button */}
+            <button
+              onClick={() => setLiveAttemptModal(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-black"
+            >
+              ✕
+            </button>
 
-               <div>
-          <h1>Attempt Live Quiz </h1>
-          <p>This feature are Comming Soon</p>
+            <div>
+              <h1>Attempt Live Quiz </h1>
+              <p>This feature are Comming Soon</p>
+            </div>
+
+          </div>
+
         </div>
-
-              </div>
-
-              </div>
 
       )
       }
