@@ -960,9 +960,9 @@ export const getQuizCategoryTopicname = (req, resp) => {
 );
         
         
-        console.log(result);
+        // console.log(result);
         
-        console.log("uniq result",uniqeResult);
+        // console.log("uniq result",uniqeResult);
         
         resp.status(200).json({ message: "get quize for filter", data: uniqeResult, success: true })
     })

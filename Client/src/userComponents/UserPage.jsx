@@ -3,6 +3,9 @@ import React, { useEffect, useState } from "react";
 import { data, useLocation, useNavigate } from "react-router-dom";
 import TopHeader from "../components/TopHeader";
 import Pagination from "../components/Pagination";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:8000")
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
@@ -41,7 +44,7 @@ const UserPage = () => {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(2);
+  const [limit, setLimit] = useState(4);
   const [totalPages, setTotalPages] = useState(1);
 
 
@@ -232,7 +235,25 @@ const UserPage = () => {
 
   const playOneVsOneFunction = () => {
     setPlayOneVsOneModal(true)
+    console.log("server is call func");
+
   }
+
+  const joinQuizFunction = () => {
+    socket.emit("join_1v1");
+    alert("waiting for another Person")
+
+  }
+
+  // LISTEN EVENTS
+  socket.on("waiting_for_opponent", () => {
+    console.log("Waiting for opponent...");
+  });
+
+  socket.on("start_match", (data) => {
+    console.log("Match started:", data);
+  });
+
 
   const playAttemptFunction = () => {
     setLiveAttemptModal(true)
@@ -1188,26 +1209,76 @@ const UserPage = () => {
 
 
       {playOneVsOneModal === true && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex h-full items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-4xl h-140 relative">
 
             {/* Close Button */}
-            <button
-              onClick={() => setPlayOneVsOneModal(false)}
-              className="absolute top-3 right-3 text-gray-600 hover:text-black"
-            >
-              ✕
-            </button>
+            <button onClick={() => setPlayOneVsOneModal(false)} className="absolute top-3 right-3 text-gray-600 hover:text-black" > ✕ </button>
 
-            <div>
-              <h1>Play One V/s One </h1>
-              <p>This feature are Comming Soon</p>
+            <div className="">
+              <h1 className="font-bold" >Play One V/s One </h1>
             </div>
+
+          <div className="flex gap-2 justify-end items-center mt-3">
+              <select className="px-3 py-1 shadow-sm border border-gray-300  rounded-lg focus:outline-none w-40 focus:ring-2 focus:ring-blue-500" onChange={(e) => setSelectCat(e.target.value)} >
+              <option value="">Select Category</option>
+              {categoryTopic?.map((t) => (<option key={t.id} value={t.category_name}>{t.category_name}</option>))}
+            </select>
+
+             {/* Topic (data will come from loop) */}
+            <select className="px-3 py-1  shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" onChange={(e) => setSelectedTopic(e.target.value)} >
+              <option value="">Select Topic</option>
+              {quizs?.length > 0 && quizs?.map((t) => ( <option key={t.id} value={t?.category?.[0]?.topic_name}>   {t?.category?.[0]?.topic_name} </option>))}
+            </select>
+
+            <select className="px-3 py-1  shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setSelectedDiff(e.target.value)} >
+              <option value="all">Select Difficulty</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
 
           </div>
 
-        </div>
+          {/* quizes  */}{
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto  max-h-auto mt-8 overflow-auto scrollbar-hide ">
+            {quizs?.length > 0 ?
+              quizs?.map((quiz) => (
+                <div key={quiz.id} className=" bg-white shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 rounded-xl p-2 h-40 max-h-50 " >
 
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-md font-bold text-gray-900"> {quiz.title} </h2>
+                    <span
+                      className={`px-4 py-.5 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
+                        ? "bg-green-600"
+                        : quiz.difficulty === "medium"
+                          ? "bg-yellow-600"
+                          : "bg-red-600"
+                        }`}
+                    >
+                      {quiz.difficulty}
+                    </span>
+                  </div>
+
+                  {/* CATEGORY INFO */}
+                  <div className="text-gray-700 mb-2">
+                    <p> <span className="font-semibold text-sm">Category:</span>{" "} {quiz.category?.[0]?.category_name} </p>
+                    <p> <span className="font-semibold text-sm">Topic:</span>{" "} {quiz.category?.[0]?.topic_name} </p>
+                  </div>
+
+                  {/*Action BUTTON */}
+                  <div className=" flex gap-2">
+                    { quiz.isAttempted === true ? <button className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md" onClick={() => reAttemptQuizFunction(quiz.id)} > Re-Attempt </button> : ""}
+                    <button className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md" onClick={() => playQuizFunction(quiz)} > ▶ Play Quiz </button>
+                  </div>
+                </div>
+              )): <h1 className="text-red-500"> No Data Found </h1>
+            }
+          </div>
+          }
+          <button className="px-6 py-1 bg-green-500 text-white rounded-lg mt-4 mx-3" onClick={()=>joinQuizFunction()}>Join</button>
+          </div>
+        </div>
       )
       }
 
