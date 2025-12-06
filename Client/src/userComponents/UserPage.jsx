@@ -239,8 +239,31 @@ const UserPage = () => {
 
   }
 
-  const joinQuizFunction = () => {
-    socket.emit("join_1v1");
+  useEffect(() => {
+  socket.on("start_match", (data) => {
+    console.log("MATCH STARTED:", data);
+   const playerA = data.map((u) => u.id);
+   alert(`Match Start b/w ${playerA[0]} / ${playerA[playerA.length - 1]} Room id is: ${data.roomId}`);
+  // alert("hello")
+
+    // Example:
+    // data.roomId
+    // data.quiz_id
+    // data.players
+  });
+
+  return () => {
+    socket.off("start_match");
+  };
+}, []);
+
+
+  const joinQuizFunction = (quiz) => {
+    setPlayOneVsOneModal(false)
+    socket.emit("join_1v1",{
+      user_id:user?.id,
+      quiz_id:quiz?.id
+    });
     alert("waiting for another Person")
 
   }
@@ -1241,7 +1264,7 @@ const UserPage = () => {
           </div>
 
           {/* quizes  */}{
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto  max-h-auto mt-8 overflow-auto scrollbar-hide ">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-auto  max-h-auto mt-8 overflow-auto scrollbar-hide ">
             {quizs?.length > 0 ?
               quizs?.map((quiz) => (
                 <div key={quiz.id} className=" bg-white shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 rounded-xl p-2 h-40 max-h-50 " >
@@ -1268,8 +1291,8 @@ const UserPage = () => {
 
                   {/*Action BUTTON */}
                   <div className=" flex gap-2">
-                    { quiz.isAttempted === true ? <button className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md" onClick={() => reAttemptQuizFunction(quiz.id)} > Re-Attempt </button> : ""}
-                    <button className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md" onClick={() => playQuizFunction(quiz)} > ▶ Play Quiz </button>
+                    
+                    <button className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md" onClick={() => {playQuizFunction(quiz);joinQuizFunction(quiz)}} > ▶ Play Quiz </button>
                   </div>
                 </div>
               )): <h1 className="text-red-500"> No Data Found </h1>
