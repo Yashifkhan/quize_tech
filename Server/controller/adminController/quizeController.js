@@ -1011,9 +1011,9 @@ export const recommendationQuiz = (req, resp) => {
                 const quizIdsList = result.map(q => q.quiz_id);
                 if (quizIdsList.length === 0) {
                     return resp.json({
-                        message: "No attempts, show beginner quizzes",
+                        message: "No attempts quiz , show beginner quizzes",
                         success: true,
-                        data: [{ category: userData.interest, level: "easy" }]
+                        // data: [{ category: userData.interest, level: "easy" }]
                     });
                 }
 

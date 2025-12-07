@@ -46,6 +46,9 @@ const UserPage = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(4);
   const [totalPages, setTotalPages] = useState(1);
+  const [showWaitingModal, setShowWaitingModal] = useState(false)
+  const [showTimeoutModal, setShowTimeoutModal] = useState(false)
+  const [timeLeft,setTimeLeft]=useState(null)
 
 
   const handleSelect = (selected) => {
@@ -64,21 +67,22 @@ const UserPage = () => {
     if (!userId) {
       alert("id is required")
     } else {
-      const resp = await axios.get(`${BASE_URL}/recommendation-quiz/${userId}`)
-      console.log("resp of recomandation quiz", resp);
-      console.log("mode value -->>>", mode);
-      if (resp.data.success === true) {
-
+      const resp = await axios.get(`${BASE_URL}/recommendation-quiz/${userId}`);
+      console.log("resp of recommendation quiz:", resp);
+      console.log("mode value:", mode);
+      if (resp?.data?.success === true) {
         if (mode === "ai") {
           console.log("AI mode active");
-          setQuizes(resp.data.data);
+          const list = resp?.data?.data;
+          if (Array.isArray(list) && list.length > 0) {
+            setQuizes(list);
+          } else {
+            alert("No attempted quizzes. Attempt at least 10.");
+          }
         }
-
-
       }
-
-
     }
+
   }
   useEffect(() => {
     recommendationQuiz()
@@ -102,8 +106,6 @@ const UserPage = () => {
       }
     } catch (error) {
       console.log("quize is not get");
-
-
     }
   }
 
@@ -116,7 +118,6 @@ const UserPage = () => {
 
     return () => clearInterval(timer);
   }, [isRunning, startTime]);
-
 
 
   const formatTime = (seconds) => {
@@ -154,7 +155,7 @@ const UserPage = () => {
     setIsRunning(true);
     console.log("play quize button");
     setModalPlayQuiz(true)
-    setSelectedQuiz(quiz || [])
+    // setSelectedQuiz(quiz)
 
   }
 
@@ -225,7 +226,6 @@ const UserPage = () => {
 
   }
 
-
   const totalAttmpt = []
   for (let i = 1; i <= reAttemptQuizeData?.totalAttempt; i++) {
     totalAttmpt.push(i)
@@ -240,31 +240,29 @@ const UserPage = () => {
   }
 
   useEffect(() => {
-  socket.on("start_match", (data) => {
-    console.log("MATCH STARTED:", data);
-   const playerA = data.map((u) => u.id);
-   alert(`Match Start b/w ${playerA[0]} / ${playerA[playerA.length - 1]} Room id is: ${data.roomId}`);
-  // alert("hello")
-
-    // Example:
-    // data.roomId
-    // data.quiz_id
-    // data.players
-  });
-
-  return () => {
-    socket.off("start_match");
-  };
-}, []);
+    socket.on("start_match", (data) => {
+      setShowWaitingModal(false);
+      alert("Match Found! Quiz is starting");
+      playQuizFunction(selectedQuiz);
+      const quizTimeSecond=data?.quiz_time || 
+      console.log("quiz time ",quizTimeSecond);
+      setTimeLeft(quizTimeSecond)
+      console.log("Match started:", data);
+    });
+    return () => {
+      socket.off("start_match");
+    };
+  }, []);
 
 
   const joinQuizFunction = (quiz) => {
     setPlayOneVsOneModal(false)
-    socket.emit("join_1v1",{
-      user_id:user?.id,
-      quiz_id:quiz?.id
+    setSelectedQuiz(quiz)
+    socket.emit("join_1v1", {
+      user_id: user?.id,
+      quiz_id: quiz?.id
     });
-    alert("waiting for another Person")
+    setShowWaitingModal(true)
 
   }
 
@@ -273,10 +271,46 @@ const UserPage = () => {
     console.log("Waiting for opponent...");
   });
 
-  socket.on("start_match", (data) => {
-    console.log("Match started:", data);
-  });
+  useEffect(() => {
+    if (showWaitingModal) {
+      const timeout = setTimeout(() => {
+        handleOpponentNotFound();
+      }, 1 * 60 * 1000); // 4 minutes
 
+      return () => clearTimeout(timeout);
+    }
+  }, [showWaitingModal]);
+
+  const handleOpponentNotFound = () => {
+    setShowWaitingModal(false);
+
+    setTimeout(() => {
+      setShowTimeoutModal(true);
+    }, 300);
+  };
+
+  const tryAgain = () => {
+    setShowTimeoutModal(false);
+    socket.emit("join_1v1", { user_id, quiz_id });
+    setShowWaitingModal(true);
+  };
+
+  useEffect(() => {
+  if (timeLeft === null) return;
+
+  if (timeLeft <= 0) {
+    alert("Time up! Quiz submitted automatically.");
+    setModalPlayQuiz(false)
+    setLiveAttemptModal(false)
+    return;
+  }
+
+  const timer = setInterval(() => {
+    setTimeLeft((prev) => prev - 1);
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, [timeLeft]);
 
   const playAttemptFunction = () => {
     setLiveAttemptModal(true)
@@ -365,7 +399,6 @@ const UserPage = () => {
         <h1 className="font-bold text-lg">Quize Tech</h1>
 
 
-
         {/* Right Section */}
         <div className="flex items-center gap-4">
 
@@ -417,7 +450,6 @@ const UserPage = () => {
           </button>
 
         </div>
-
       </div>
 
       {/* user profile CONTENT */}
@@ -464,7 +496,6 @@ const UserPage = () => {
           <h1 className="text-xl font-bold text-black">All Quizzes</h1>
           {/* Filter for search quiz */}
           <div className="flex items-center gap-3 p-2">
-
             {/* search bar  */}
             <div className="flex items-center ">
               <input type="text" className=" border p-1  text-sm shadow-xs border-gray-100 rounded-lg w-40" placeholder="search quize"
@@ -603,7 +634,7 @@ const UserPage = () => {
                     }
                     <button
                       className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
-                      onClick={() => playQuizFunction(quiz)}
+                      onClick={() => {playQuizFunction(quiz); setSelectedQuiz(quiz)}}
                     >
                       ▶ Play Quiz
                     </button>
@@ -650,7 +681,6 @@ const UserPage = () => {
 
       {/* quize play modal  */}
       {modalPlayQuiz && (
-
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center z-50">
 
           <div className="bg-white w-11/12 max-w-xl rounded-2xl p-6 shadow-xl
@@ -665,9 +695,22 @@ const UserPage = () => {
                 {currentIndex + 1}/{selectedQuiz?.questions?.length}
               </div>
 
+          {/* default time  */}
+
               <div className="text-right text-md font-bold">
                 ⏱ {formatTime(timePassed)}
               </div>
+
+              {/* for one vs one quize real time fetch in db  */}
+   {timeLeft !== null && (
+  <div className="text-right text-md font-bold text-black">
+    Time Left: 
+    {Math.floor(timeLeft / 60)}:
+    {String(timeLeft % 60).padStart(2, "0")}
+  </div>
+)}
+
+
 
 
               <button
@@ -1230,7 +1273,7 @@ const UserPage = () => {
         : ""
       }
 
-
+      {/* playOneVsOneModal  */}
       {playOneVsOneModal === true && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex h-full items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl shadow-xl w-4xl h-140 relative">
@@ -1242,69 +1285,91 @@ const UserPage = () => {
               <h1 className="font-bold" >Play One V/s One </h1>
             </div>
 
-          <div className="flex gap-2 justify-end items-center mt-3">
+            <div className="flex gap-2 justify-end items-center mt-3">
               <select className="px-3 py-1 shadow-sm border border-gray-300  rounded-lg focus:outline-none w-40 focus:ring-2 focus:ring-blue-500" onChange={(e) => setSelectCat(e.target.value)} >
-              <option value="">Select Category</option>
-              {categoryTopic?.map((t) => (<option key={t.id} value={t.category_name}>{t.category_name}</option>))}
-            </select>
+                <option value="">Select Category</option>
+                {categoryTopic?.map((t) => (<option key={t.id} value={t.category_name}>{t.category_name}</option>))}
+              </select>
 
-             {/* Topic (data will come from loop) */}
-            <select className="px-3 py-1  shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" onChange={(e) => setSelectedTopic(e.target.value)} >
-              <option value="">Select Topic</option>
-              {quizs?.length > 0 && quizs?.map((t) => ( <option key={t.id} value={t?.category?.[0]?.topic_name}>   {t?.category?.[0]?.topic_name} </option>))}
-            </select>
+              {/* Topic (data will come from loop) */}
+              <select className="px-3 py-1  shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" onChange={(e) => setSelectedTopic(e.target.value)} >
+                <option value="">Select Topic</option>
+                {quizs?.length > 0 && quizs?.map((t) => (<option key={t.id} value={t?.category?.[0]?.topic_name}>   {t?.category?.[0]?.topic_name} </option>))}
+              </select>
 
-            <select className="px-3 py-1  shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setSelectedDiff(e.target.value)} >
-              <option value="all">Select Difficulty</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
+              <select className="px-3 py-1  shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setSelectedDiff(e.target.value)} >
+                <option value="all">Select Difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
 
-          </div>
+            </div>
 
-          {/* quizes  */}{
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-auto  max-h-auto mt-8 overflow-auto scrollbar-hide ">
-            {quizs?.length > 0 ?
-              quizs?.map((quiz) => (
-                <div key={quiz.id} className=" bg-white shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 rounded-xl p-2 h-40 max-h-50 " >
+            {/* quizes  */}{
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-auto  max-h-auto mt-8 overflow-auto scrollbar-hide ">
+                {quizs?.length > 0 ?
+                  quizs?.map((quiz) => (
+                    <div key={quiz.id} className=" bg-white shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 rounded-xl p-2 h-40 max-h-50 " >
 
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-md font-bold text-gray-900"> {quiz.title} </h2>
-                    <span
-                      className={`px-4 py-.5 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
-                        ? "bg-green-600"
-                        : quiz.difficulty === "medium"
-                          ? "bg-yellow-600"
-                          : "bg-red-600"
-                        }`}
-                    >
-                      {quiz.difficulty}
-                    </span>
-                  </div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-md font-bold text-gray-900"> {quiz.title} </h2>
+                        <span
+                          className={`px-4 py-.5 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
+                            ? "bg-green-600"
+                            : quiz.difficulty === "medium"
+                              ? "bg-yellow-600"
+                              : "bg-red-600"
+                            }`}
+                        >
+                          {quiz.difficulty}
+                        </span>
+                      </div>
 
-                  {/* CATEGORY INFO */}
-                  <div className="text-gray-700 mb-2">
-                    <p> <span className="font-semibold text-sm">Category:</span>{" "} {quiz.category?.[0]?.category_name} </p>
-                    <p> <span className="font-semibold text-sm">Topic:</span>{" "} {quiz.category?.[0]?.topic_name} </p>
-                  </div>
+                      {/* CATEGORY INFO */}
+                      <div className="text-gray-700 mb-2">
+                        <p> <span className="font-semibold text-sm">Category:</span>{" "} {quiz.category?.[0]?.category_name} </p>
+                        <p> <span className="font-semibold text-sm">Topic:</span>{" "} {quiz.category?.[0]?.topic_name} </p>
+                      </div>
 
-                  {/*Action BUTTON */}
-                  <div className=" flex gap-2">
-                    
-                    <button className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md" onClick={() => {playQuizFunction(quiz);joinQuizFunction(quiz)}} > ▶ Play Quiz </button>
-                  </div>
-                </div>
-              )): <h1 className="text-red-500"> No Data Found </h1>
+                      {/*Action BUTTON */}
+                      <div className=" flex gap-2">
+                        <button className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md" onClick={() => joinQuizFunction(quiz)} > ▶ Play Quiz </button>
+                      </div>
+                    </div>
+                  )) : <h1 className="text-red-500"> No Data Found </h1>
+                }
+              </div>
             }
-          </div>
-          }
-          <button className="px-6 py-1 bg-green-500 text-white rounded-lg mt-4 mx-3" onClick={()=>joinQuizFunction()}>Join</button>
+            {/* <button className="px-6 py-1 bg-green-500 text-white rounded-lg mt-4 mx-3" onClick={(}>Join</button> */}
           </div>
         </div>
       )
       }
 
+      {showWaitingModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl text-center">
+            <h2 className="text-lg font-semibold">Waiting for Opponent...</h2>
+            <p className="text-gray-600 mt-2">Searching for another players in this quiz</p>
+            <div className="loader mt-4" />
+            <button className="mt-4 bg-red-500 text-white px-4 py-2 rounded" onClick={() => setShowWaitingModal(false)} > Cancel </button>
+          </div>
+        </div>
+      )}
+
+      {showTimeoutModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl text-center w-[90%] md:w-[350px]">
+            <h2 className="text-lg font-semibold">Opponent Not Found</h2>
+            <p className="text-gray-600 mt-2">No player joined your quiz section</p>
+            <div className="mt-4 flex flex-col gap-2">
+              <button onClick={tryAgain} className="bg-blue-600 text-white py-2 rounded" >Try Again</button>
+              <button onClick={() => { setShowTimeoutModal(false); setPlayOneVsOneModal(false) }} className="bg-blue-600 text-white py-2 rounded" > Attempt Later </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {liveAttemptModal === true && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">

@@ -1,18 +1,11 @@
 import connection from "../db/config.js";
 
-let waitingPlayers = {};  
+let waitingPlayers = {};
 // Store waiting player based on quiz_id
 
 export const OneVsOne = (io) => {
-    console.log("socket function executed");
-
     io.on("connection", (socket) => {
-        console.log("Socket connected:", socket.id);
-
-        socket.on("join_1v1", ({ user_id, quiz_id }) => {
-            console.log("JOIN:", socket.id, "QUIZ:", quiz_id);
-
-            // If no one waiting for this quiz → add player
+        socket.on("join_1v1", async ({ user_id, quiz_id }) => {
             if (!waitingPlayers[quiz_id]) {
                 waitingPlayers[quiz_id] = {
                     socket,
@@ -38,16 +31,30 @@ export const OneVsOne = (io) => {
             playerB.socket.join(roomId);
 
             console.log("Matched in room:", roomId);
+            connection.query("SELECT quiz_time from quizs where id= ?", [quiz_id], (err, result) => {
+                if (err) {
+                    console.log("DB Error:", err);
+                    return;
+                } console.log("result of get quize time", result);
 
-            // Send start match
-            io.to(roomId).emit("start_match", {
-                roomId,
-                quiz_id,
-                players: [
-                    { id: playerA.user_id, socket: playerA.socket.id },
-                    { id: playerB.user_id, socket: playerB.socket.id }
-                ]
-            });
+                const quizTimeString = result[0]?.quiz_time || "00:30:00";
+
+                const [hours, minutes, seconds] = quizTimeString.split(":").map(Number);
+
+                const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
+                const quizTime = totalSeconds;
+
+                io.to(roomId).emit("start_match", {
+                    roomId,
+                    quiz_id,
+                    quiz_time: quizTime,
+                    players: [
+                        { id: playerA.user_id, socket: playerA.socket.id },
+                        { id: playerB.user_id, socket: playerB.socket.id }
+                    ]
+                });
+            })
         });
     });
 };
