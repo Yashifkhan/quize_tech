@@ -12,7 +12,6 @@ const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 const UserPage = () => {
   const naviagat = useNavigate()
 
-
   // states 
   const location = useLocation();
   const user = location?.state?.userData;
@@ -68,7 +67,7 @@ const UserPage = () => {
       alert("id is required")
     } else {
       const resp = await axios.get(`${BASE_URL}/recommendation-quiz/${userId}`);
-      console.log("resp of recommendation quiz:", resp);
+      // console.log("resp of recommendation quiz:", resp);
       console.log("mode value:", mode);
       if (resp?.data?.success === true) {
         if (mode === "ai") {
@@ -91,11 +90,10 @@ const UserPage = () => {
 
   const getQuizs = async () => {
     try {
-      console.log("search", search);
       const userId = user.id
       const resp = await axios.get(`${BASE_URL}/get-quiz/${selectedDiff}/${userId}`,
         { params: { category: selectCat, topic: selectedTopic, search: debouncedSearch, page, limit } })
-      console.log("getquize resp", resp?.data?.data);
+      // console.log("getquize resp", resp?.data?.data);
       const result = resp?.data?.data
       if (resp?.data?.success) {
         setQuizes(resp.data.data)
@@ -135,7 +133,7 @@ const UserPage = () => {
   const fetchCategoryTopic = async () => {
     try {
       const resp = await axios.get(`${BASE_URL}/getQuizCategoryTopicname`)
-      console.log("resp of get cat topic ", resp);
+      // console.log("resp of get cat topic ", resp);
       if (resp.data.success) {
         setCategoryTopic(resp.data.data)
       }
@@ -333,6 +331,40 @@ const UserPage = () => {
   }, [debouncedSearch, selectedDiff, selectCat, selectedTopic, page]);
 
 
+  // ove vs one quize result save 
+   const submitOneVsOneQuiz = async () => {
+    console.log("one vs one submit fun executed");
+    if (currentIndex < selectedQuiz.questions.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+      setSelectedOption(null);
+    } else if (currentIndex === selectedQuiz.questions.length - 1) {
+      handleSubmitQuiz()
+      setIsRunning(false);
+      console.log("attemptQuize",attemptQuize);
+      
+      try {
+        const resp = await axios.post(`${BASE_URL}/submit-oneVsone-quiz/${user?.id}`, attemptQuize)
+        console.log("resp of submit quiz", resp);
+        if (resp?.data?.success) {
+          setModalPlayQuiz(false)
+          setScoreModal(true)
+          setScoreData(resp.data.data)
+        }
+      } catch (error) {
+        alert("quize is not submit")
+
+      }
+    }
+    else {
+      alert("Quiz Finished!");
+    }
+  }
+
+
+
+
+
+// regular quize result  save 
   const submitPlayQuiz = async () => {
     if (currentIndex < selectedQuiz.questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -779,12 +811,14 @@ const UserPage = () => {
                 Prev
               </button>
 
-              {/* Save & Next Button */}
+              {/* Save & Next Button for one vs one  */}
               <button
-                onClick={() => submitPlayQuiz()}
+                // onClick={() => playOneVsOneModal === true ? submitOneVsOneQuiz() :submitPlayQuiz() }
+                onClick={() => playOneVsOneModal === true ? submitOneVsOneQuiz() :submitOneVsOneQuiz() }
+                
                 className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
               >
-                {currentIndex === selectedQuiz?.questions?.length - 1 ? "Submit" : "Save & Next"}
+                {currentIndex === selectedQuiz?.questions?.length - 1 ? "Submit socket io" : "Save & Next"}
                 {/* Save & Next */}
               </button>
             </div>
@@ -1087,7 +1121,7 @@ const UserPage = () => {
                   Prev
                 </button>
 
-                {/* Save & Next / Submit */}
+                {/* Save & Next / Submit for review quiz data */}
                 <button
                   onClick={() => submitPlayQuiz()}
                   className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"

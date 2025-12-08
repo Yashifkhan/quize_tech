@@ -1,13 +1,15 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
-import { useFetcher, useLocation } from 'react-router-dom';
+import { useFetcher, useLocation, useNavigate } from 'react-router-dom';
 import Quizs from './Quizs';
 import TopHeader from '../components/TopHeader';
 import AdminDashboard from './AdminDashboard';
 // import { FaUserCircle } from "react-icons/fa";
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
+
 const AdminPage = () => {
+  const navigate=useNavigate()
   const location = useLocation()
   const user = location.state?.userData;
   const [createQuizeModal, setCreateQuizeModal] = useState(false)
@@ -359,6 +361,7 @@ console.log("aiQuestions",aiQuestions);
 
           {/* Logout Button */}
           <button
+          onClick={()=> navigate('/login')}
             className="
             bg-red-500 text-white px-4 py-2
             rounded-xl font-semibold

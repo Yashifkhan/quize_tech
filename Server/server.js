@@ -5,7 +5,7 @@ import authRoute from './routes/userRoutes/authRoutes.js'
 import quizeRoute from './routes/adminRoutes/quizeRoutes.js'
 import http from "http"
 import { Server } from 'socket.io'
-import { OneVsOne } from './socketIo/oneVsOne.js'
+import { OneVsOne, oneVsOneQuizeSubmit } from './socketIo/oneVsOne.js'
 
 dotenv.config()
 
@@ -23,7 +23,7 @@ OneVsOne(io)
 
 app.use('/api/v1',authRoute)
 app.use('/api/v1',quizeRoute)
-
+app.post('/api/v1/submit-oneVsone-quiz/:user_id',oneVsOneQuizeSubmit)
 
 server.listen(process.env.PORT || 8000,()=>{
     console.log(`server is running on port ${process.env.PORT}`);

@@ -11,17 +11,14 @@ export const OneVsOne = (io) => {
                     socket,
                     user_id
                 };
-
                 socket.emit("waiting_for_opponent");
                 console.log("Player waiting for quiz", quiz_id, ":", socket.id);
                 return;
             }
+            
+            const playerA = waitingPlayers[quiz_id]; 
+            const playerB = { socket, user_id };     
 
-            // Someone already waiting with SAME quiz_id → match
-            const playerA = waitingPlayers[quiz_id];  // stored player
-            const playerB = { socket, user_id };      // current player
-
-            // Clear waiting
             delete waitingPlayers[quiz_id];
 
             const roomId = `room_${playerA.socket.id}_${playerB.socket.id}`;
@@ -58,3 +55,27 @@ export const OneVsOne = (io) => {
         });
     });
 };
+
+
+export const oneVsOneQuizeSubmit=(req,resp)=>{
+    const {quizId,userId,time,quize_type,questions}=req.body
+    console.log("quizId",quizId);
+    console.log("userId",userId);
+    console.log("time",time);
+    console.log("quize_type",quize_type);
+    console.log("questions",questions);
+    const db=connection
+
+    const getQuizQuestions="SELECT * FROM questions where quiz_id=?"
+    db.query(getQuizQuestions,[quizId],(err,result)=>{
+        if(err) return resp.status(500).json({message:"server error ",success:false})
+            console.log("result of get quiz",result);
+    })
+    
+    
+    
+    
+    
+
+
+}
