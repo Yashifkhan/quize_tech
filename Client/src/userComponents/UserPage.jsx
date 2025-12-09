@@ -48,6 +48,7 @@ const UserPage = () => {
   const [showWaitingModal, setShowWaitingModal] = useState(false)
   const [showTimeoutModal, setShowTimeoutModal] = useState(false)
   const [timeLeft,setTimeLeft]=useState(null)
+  const [matchId,setMatchId]=useState(null)
 
 
   const handleSelect = (selected) => {
@@ -164,6 +165,7 @@ const UserPage = () => {
     console.log("userAns", userAns);
 
     setAttemptQuiz((prev) => ({
+      matchId:matchId,
       quizId: selectedQuiz?.id,
       userId: user?.id,
       time: time,
@@ -240,6 +242,7 @@ const UserPage = () => {
   useEffect(() => {
     socket.on("start_match", (data) => {
       setShowWaitingModal(false);
+      setMatchId(data.roomId)
       alert("Match Found! Quiz is starting");
       playQuizFunction(selectedQuiz);
       const quizTimeSecond=data?.quiz_time || 
@@ -414,7 +417,7 @@ const UserPage = () => {
 
 
   }
-  const gradeInfo = getGrade(scoreData.percentage);
+  const gradeInfo = getGrade(scoreData?.percentage);
 
 
 
