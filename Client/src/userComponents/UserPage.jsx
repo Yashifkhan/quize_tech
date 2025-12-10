@@ -49,6 +49,7 @@ const UserPage = () => {
   const [showTimeoutModal, setShowTimeoutModal] = useState(false)
   const [timeLeft,setTimeLeft]=useState(null)
   const [matchId,setMatchId]=useState(null)
+  const [waitResult,setWaitResult]=useState(false)
 
 
   const handleSelect = (selected) => {
@@ -347,10 +348,11 @@ const UserPage = () => {
       
       try {
         const resp = await axios.post(`${BASE_URL}/submit-oneVsone-quiz/${user?.id}`, attemptQuize)
-        console.log("resp of submit quiz", resp);
+        console.log("resp of submit quiz", resp); 
         if (resp?.data?.success) {
           setModalPlayQuiz(false)
-          setScoreModal(true)
+          // setScoreModal(true)
+          setWaitResult(true)
           setScoreData(resp.data.data)
         }
       } catch (error) {
@@ -872,7 +874,7 @@ const UserPage = () => {
                   <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4">
                     {/* <Trophy className="w-10 h-10 text-yellow-500" /> */}
                   </div>
-                  <h2 className="text-3xl font-bold mb-2">{getPerformanceMessage(scoreData.percentage)}</h2>
+                  <h2 className="text-3xl font-bold mb-2">{getPerformanceMessage(scoreData?.percentage)}</h2>
                   <p className="text-blue-100">Quiz Completed Successfully</p>
                 </div>
               </div>
@@ -880,7 +882,7 @@ const UserPage = () => {
               {/* Score Overview */}
               <div className="p-8">
                 {/* Main Score Display */}
-                <div className="flex items-center justify-center mb-8">
+                {/* <div className="flex items-center justify-center mb-8">
                   <div className={`${gradeInfo.bg} rounded-3xl p-8 text-center min-w-[200px]`}>
                     <div className={`text-6xl font-bold ${gradeInfo.color} mb-2`}>
                       {scoreData.score}/{scoreData.total_question}
@@ -892,7 +894,7 @@ const UserPage = () => {
                       {scoreData.percentage}% Score
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -902,7 +904,7 @@ const UserPage = () => {
                       {/* <Target className="w-5 h-5 text-purple-600" /> */}
                       <span className="text-xs font-semibold text-purple-600 uppercase">Accuracy</span>
                     </div>
-                    <div className="text-2xl font-bold text-purple-700">{scoreData.accuracy}%</div>
+                    <div className="text-2xl font-bold text-purple-700">{scoreData?.accuracy}%</div>
                   </div>
 
                   {/* Time Taken */}
@@ -911,7 +913,7 @@ const UserPage = () => {
                       {/* <Clock className="w-5 h-5 text-blue-600" /> */}
                       <span className="text-xs font-semibold text-blue-600 uppercase">Time</span>
                     </div>
-                    <div className="text-2xl font-bold text-blue-700">{scoreData.time}</div>
+                    <div className="text-2xl font-bold text-blue-700">{scoreData?.time}</div>
                   </div>
 
                   {/* Rank */}
@@ -920,7 +922,7 @@ const UserPage = () => {
                       {/* <Award className="w-5 h-5 text-yellow-600" /> */}
                       <span className="text-xs font-semibold text-yellow-600 uppercase">Rank</span>
                     </div>
-                    <div className="text-2xl font-bold text-yellow-700">#{scoreData.rank}</div>
+                    <div className="text-2xl font-bold text-yellow-700">#{scoreData?.rank}</div>
                   </div>
 
                   {/* Coins Earned */}
@@ -929,7 +931,7 @@ const UserPage = () => {
                       {/* <TrendingUp className="w-5 h-5 text-green-600" /> */}
                       <span className="text-xs font-semibold text-green-600 uppercase">Coins</span>
                     </div>
-                    <div className="text-2xl font-bold text-green-700">+{scoreData.coin}</div>
+                    <div className="text-2xl font-bold text-green-700">+{scoreData?.coin}</div>
                   </div>
                 </div>
 
@@ -1430,6 +1432,20 @@ const UserPage = () => {
         </div>
 
       )
+      }
+
+      {
+        waitResult && (
+           <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-xl text-center">
+            <h2 className="text-lg font-semibold">Waiting for Result</h2>
+            <p className="text-gray-600 mt-2">Wait for another players submit this quiz</p>
+            <div className="loader mt-4" />
+            <button className="mt-4 bg-red-500 text-white px-4 py-2 rounded" onClick={() => setWaitResult(false)} > Cancel </button>
+          </div>
+        </div>
+
+        )
       }
 
 
