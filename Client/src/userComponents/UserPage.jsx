@@ -50,6 +50,26 @@ const UserPage = () => {
   const [timeLeft,setTimeLeft]=useState(null)
   const [matchId,setMatchId]=useState(null)
   const [waitResult,setWaitResult]=useState(false)
+  const [results, setResults] = useState(null);
+  const [showResult,setShowResult]=useState(false)
+
+
+
+    useEffect(() => {
+        // Listen for match completion
+        socket.on('match_completed', (data) => {
+            console.log('Match completed!', data);
+            if(data){
+              setResults(data);
+              setWaitResult(false)
+              setShowResult(true);  
+            }
+            setWaitResult(false);
+            alert("match complete sucesfully")
+        });
+
+        return () => socket.off('match_completed');
+    }, []);
 
 
   const handleSelect = (selected) => {
@@ -336,34 +356,58 @@ const UserPage = () => {
 
 
   // ove vs one quize result save 
-   const submitOneVsOneQuiz = async () => {
-    console.log("one vs one submit fun executed");
-    if (currentIndex < selectedQuiz.questions.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedOption(null);
-    } else if (currentIndex === selectedQuiz.questions.length - 1) {
-      handleSubmitQuiz()
-      setIsRunning(false);
-      console.log("attemptQuize",attemptQuize);
-      
-      try {
-        const resp = await axios.post(`${BASE_URL}/submit-oneVsone-quiz/${user?.id}`, attemptQuize)
-        console.log("resp of submit quiz", resp); 
-        if (resp?.data?.success) {
-          setModalPlayQuiz(false)
-          // setScoreModal(true)
-          setWaitResult(true)
-          setScoreData(resp.data.data)
-        }
-      } catch (error) {
-        alert("quize is not submit")
+const submitOneVsOneQuiz = async () => {
+  console.log("one vs one submit fun executed");
 
+  // Case 1: Move to next question
+  if (currentIndex < selectedQuiz.questions.length - 1) {
+    setCurrentIndex((prev) => prev + 1);
+    setSelectedOption(null);
+    return;  // Return here to stop execution
+  }
+
+  // Case 2: Last question -> Submit quiz
+  if (currentIndex === selectedQuiz.questions.length - 1) {
+    setIsRunning(false);
+    handleSubmitQuiz();
+
+    try {
+      const resp = await axios.post(
+        `${BASE_URL}/submit-oneVsone-quiz/${user?.id}`,
+        attemptQuize
+      );
+
+      console.log("resp of submit quiz", resp);
+
+      const result = resp?.data?.data;
+      const success = resp?.data?.success;
+
+      if (!success) {
+        alert("Something went wrong");
+        return;
       }
-    }
-    else {
-      alert("Quiz Finished!");
+
+      // CASE A: MATCH IS DRAW
+      if (result?.isDraw === true) {
+        setShowResult(true);        // Show draw result screen
+        return;
+      }
+
+      // CASE B: NORMAL RESULT (WIN/LOSE)
+      setModalPlayQuiz(false);
+      setWaitResult(true);
+      setScoreData(result);
+      return;
+
+    } catch (error) {
+      console.log(error);
+      alert("Quiz is not submitted");
     }
   }
+
+  // Case 3: Should not reach here
+  alert("Quiz Finished!");
+};
 
 
 
@@ -1447,6 +1491,128 @@ const UserPage = () => {
 
         )
       }
+      
+{showResult && results && (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+
+    <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl w-[380px] p-6 shadow-2xl animate-fadeIn">
+
+      {/* Winner / Draw Title */}
+      <div className="text-center">
+        {results.isDraw ? (
+          <h2 className="text-2xl font-bold text-blue-300 drop-shadow-md">
+            Match Draw
+          </h2>
+        ) : (
+          <h2
+            className={`text-2xl font-bold drop-shadow-md ${
+              results.winnerId === user?.id ? "text-green-300" : "text-red-300"
+            }`}
+          >
+            {results.winnerId === user?.id ? "Victory!" : "Defeat"}
+          </h2>
+        )}
+
+        {/* Subtitles */}
+        {!results.isDraw ? (
+          <p className="text-white/80 text-sm mt-1">
+            {results.winnerId === user?.id
+              ? "You outperformed your opponent."
+              : "Try again to claim victory."}
+          </p>
+        ) : (
+          <p className="text-white/80 text-sm mt-1">Both players performed equally well.</p>
+        )}
+      </div>
+
+      {/* Trophy Animation */}
+      <div className="flex justify-center mt-4">
+        {!results.isDraw ? (
+          <div className="bg-yellow-400 w-24 h-24 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+            🏆
+          </div>
+        ) : (
+          <div className="bg-blue-400 w-24 h-24 rounded-full flex items-center justify-center shadow-lg">
+            🤝
+          </div>
+        )}
+      </div>
+
+      {/* Players Section */}
+      <div className="mt-6 grid grid-cols-2 gap-4">
+
+        {/* Player 1 */}
+        <div
+          className={`p-4 rounded-xl text-center transition-all ${
+            results.winnerId === results.results.player1.userId
+              ? "bg-green-200/20 border border-green-400 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+              : "bg-white/10 border border-white/20"
+          }`}
+        >
+          <p className="font-semibold text-white text-sm">
+            {results.results.player1.user?.name}
+          </p>
+           <p className="font-semibold text-white text-sm">
+            {results.results.player1.user?.email}
+          </p>
+          <p className="text-white/80 text-xs mt-1">
+            Score: {results.results.player1.score}
+          </p>
+          <p className="text-white/80 text-xs">
+            Correct: {results.results.player1.correctAnswers}
+          </p>
+          <p className="text-white/80 text-xs">
+            Wrong: {results.results.player1.wrongAnswers}
+          </p>
+          <p className="text-white/80 text-xs">
+            Coins: {results.results.player1.user.coins}
+          </p>
+        </div>
+
+        {/* Player 2 */}
+        <div
+          className={`p-4 rounded-xl text-center transition-all ${
+            results.winnerId === results.results.player2.userId
+              ? "bg-green-200/20 border border-green-400 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+              : "bg-white/10 border border-white/20"
+          }`}
+        >
+          <p className="font-semibold text-white text-sm">
+            {results.results.player2.user?.name}
+          </p>
+           <p className="font-semibold text-white text-sm">
+            {results.results.player2.user?.email}
+          </p>
+          <p className="text-white/80 text-xs mt-1">
+            Score: {results.results.player2.score}
+          </p>
+          <p className="text-white/80 text-xs">
+            Correct: {results.results.player2.correctAnswers}
+          </p>
+          <p className="text-white/80 text-xs">
+            Wrong: {results.results.player2.wrongAnswers}
+          </p>
+          <p className="text-white/80 text-xs">
+            Coins: {results.results.player2.user.coins}
+          </p>
+        </div>
+      </div>
+
+      {/* Close Button */}
+      <div className="mt-6 text-center">
+        <button
+          className="px-6 py-2 rounded-xl bg-red-500 text-white font-medium shadow-lg hover:bg-red-600 transition"
+          onClick={() => setShowResult(false)}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+  
 
 
     </>
