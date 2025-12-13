@@ -968,6 +968,10 @@ export const getQuizCategoryTopicname = (req, resp) => {
     })
 }
 
+
+
+
+
 // RECOMMENDATION SYSTEM
 export const recommendationQuiz = (req, resp) => {
     const db = connection;
@@ -975,6 +979,7 @@ export const recommendationQuiz = (req, resp) => {
     if (!userId) {
         return resp.status(400).json({ message: "userId is required", success: false });
     }
+    
     const userData = { userId };
     // 1. USER INTEREST
     const getUserInterests = "SELECT interest FROM users WHERE id=?";
