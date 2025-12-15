@@ -57,42 +57,58 @@ const AdminDashboard = () => {
         </div> */}
       </div>
 
-      {/* Stats Boxes */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-4">
-        <div className="bg-blue-100 py-3 px-6  rounded-xl shadow">
-          <p className="text-sm font-medium">Total Users</p>
-          <h2 className="text-xl font-bold mt-2">{dashBoardData?.users}</h2>
-        </div>
+    {/* Stats Cards */}
+{/* Stats Cards – Borderless Compact Design */}
+<div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+  
+  <div className="bg-green-50 rounded-xl px-4 py-3 shadow-sm hover:shadow transition">
+    <p className="text-xs font-medium text-green-700">Total Users</p>
+    <h2 className="text-lg font-bold text-green-800 mt-1">
+      {dashBoardData?.users}
+    </h2>
+  </div>
 
-        <div className="bg-green-100 py-3 px-6 rounded-xl shadow">
-          <p className="text-sm font-medium">Total Quizzes</p>
-          <h2 className="text-xl font-bold mt-2">{dashBoardData?.TotalQuizs}</h2>
-        </div>
+  <div className="bg-green-100 rounded-xl px-4 py-3 shadow-sm hover:shadow transition">
+    <p className="text-xs font-medium text-green-700">Total Quizzes</p>
+    <h2 className="text-lg font-bold text-green-900 mt-1">
+      {dashBoardData?.TotalQuizs}
+    </h2>
+  </div>
 
-        <div className="bg-yellow-100 py-3 px-6 rounded-xl shadow">
-          <p className="text-sm font-medium">Most Played Quiz</p>
-          <h2 className="text-xl font-bold mt-2">{dashBoardData?.mostAttmptQuizs}</h2>
-        </div>
+  <div className="bg-red-50 rounded-xl px-4 py-3 shadow-sm hover:shadow transition">
+    <p className="text-xs font-medium text-red-700">Most Played Quiz</p>
+    <h2 className="text-lg font-bold text-red-800 mt-1 truncate">
+      {dashBoardData?.mostAttmptQuizs}
+    </h2>
+  </div>
 
-        <div className="bg-red-100 py-3 px-6 rounded-xl shadow">
-          <p className="text-sm font-medium">Total Attempts</p>
-          <h2 className="text-xl font-bold mt-2">{dashBoardData?.totalAttempts}</h2>
-        </div>
-      </div>
+  <div className="bg-red-100 rounded-xl px-4 py-3 shadow-sm hover:shadow transition">
+    <p className="text-xs font-medium text-red-700">Total Attempts</p>
+    <h2 className="text-lg font-bold text-red-900 mt-1">
+      {dashBoardData?.totalAttempts}
+    </h2>
+  </div>
 
-{/* Table / Recent Data */}
-<div className="bg-white shadow-lg rounded-xl p-6">
-  <h2 className="text-lg font-semibold mb-4">Recent Added Quizzes</h2>
+</div>
+
+
+
+{/* Recent Quizzes Table */}
+<div className="bg-white border rounded-xl shadow-sm p-4">
+  <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+    <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+    Recent Added Quizzes
+  </h2>
 
   <div className="overflow-x-auto">
-    <table className="w-full text-sm border-collapse">
+    <table className="w-full text-xs border-collapse">
       <thead>
-        <tr className="bg-gray-100 text-gray-700">
-          <th className="p-3 border font-medium">ID</th>
-          <th className="p-3 border font-medium">Quiz Name</th>
-          <th className="p-3 border font-medium">Category</th>
-          <th className="p-3 border font-medium">Topic</th>
-          <th className="p-3 border font-medium">Created At</th>
+        <tr className="bg-green-50 text-green-700">
+          <th className="px-3 py-2 border font-semibold text-center">ID</th>
+          <th className="px-3 py-2 border font-semibold text-left">Quiz</th>
+          <th className="px-3 py-2 border font-semibold text-left">Category</th>
+          <th className="px-3 py-2 border font-semibold text-left">Topic</th>
+          <th className="px-3 py-2 border font-semibold text-center">Created</th>
         </tr>
       </thead>
 
@@ -100,27 +116,39 @@ const AdminDashboard = () => {
         {dashBoardData?.lastFiveQuize?.map((q, i) => (
           <tr
             key={q.id}
-            className={`transition-all ${
-              i % 2 === 0 ? "bg-gray-50" : "bg-white"
-            } hover:bg-blue-50`}
+            className={`transition-colors duration-150
+              ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}
+              hover:bg-red-50`}
           >
-            <td className="p-3 border text-center font-medium text-gray-700">
+            <td className="px-3 py-2 border text-center font-medium text-gray-700">
               {q.id}
             </td>
-            <td className="p-3 border text-gray-800 font-semibold">
+
+            <td className="px-3 py-2 border font-semibold text-gray-800">
               {q.title}
             </td>
-            <td className="p-3 border text-gray-700">
-              {q.category_name || (
+
+            <td className="px-3 py-2 border text-gray-700">
+              {q.category_name ? (
+                <span className="inline-block px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                  {q.category_name}
+                </span>
+              ) : (
                 <span className="text-gray-400 italic">N/A</span>
               )}
             </td>
-            <td className="p-3 border text-gray-700">
-              {q.topic_name || (
+
+            <td className="px-3 py-2 border text-gray-700">
+              {q.topic_name ? (
+                <span className="inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                  {q.topic_name}
+                </span>
+              ) : (
                 <span className="text-gray-400 italic">N/A</span>
               )}
             </td>
-            <td className="p-3 border text-gray-600">
+
+            <td className="px-3 py-2 border text-center text-gray-600 whitespace-nowrap">
               {new Date(q.created_at).toLocaleDateString()}
             </td>
           </tr>
@@ -129,6 +157,7 @@ const AdminDashboard = () => {
     </table>
   </div>
 </div>
+
 
 
     </div>

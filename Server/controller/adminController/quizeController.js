@@ -317,10 +317,15 @@ export const getQuiz = (req, resp) => {
 
 export const getAllQuizs = (req, resp) => {
     const db = connection;
-    const { selectedDiff } = req.query
+    const { selectedDiff,search } = req.query
     // const selectedDiff="hard"
+console.log("search",search);
+
 
     const categorySQL = "SELECT * FROM category";
+
+      
+
     db.query(categorySQL, (err, categories) => {
         if (err) {
             return resp.status(500).json({ message: "server error", success: false });
@@ -328,6 +333,9 @@ export const getAllQuizs = (req, resp) => {
 console.log("selectedDiff",selectedDiff);
 
         let quizSQL = "SELECT * FROM quizs";
+        if(search){
+            quizSQL += ` WHERE title LIKE '%${search}%'`;
+        }
 
         // If NOT "all", filter by difficulty
         if (selectedDiff !== "all") {

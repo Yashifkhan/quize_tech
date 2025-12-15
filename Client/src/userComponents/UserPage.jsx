@@ -483,7 +483,7 @@ const submitOneVsOneQuiz = async () => {
         {/* Right Section */}
         <div className="flex items-center gap-4">
 
-          <button
+          {/* <button
             onClick={() => playAttemptFunction()}
             className="
     flex items-center justify-center gap-2 
@@ -497,7 +497,7 @@ const submitOneVsOneQuiz = async () => {
   "
           >
             <span className="font-medium">Live Attempt</span>
-          </button>
+          </button> */}
 
           <button
             className="
@@ -513,7 +513,6 @@ const submitOneVsOneQuiz = async () => {
           >
             <span className="text-sm tracking-wide">Play 1 V/S 1</span>
           </button>
-
 
           {/* Coins */}
           <div className="leading-tight text-right">
