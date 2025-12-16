@@ -24,8 +24,15 @@ export const createQuiz = (req, resp) => {
 
             const catDataId = result.insertId;
 
-            const quizSql = "INSERT INTO quizs (title,category_id,created_by,difficulty) VALUES (?,?,?,?)";
-            db.query(quizSql, [quizeData.title, catDataId, quizeData.created_by, quizeData.difficulty],
+           function minutesToTime(minutes) {
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00`;
+}
+const formateTime = minutesToTime(quizeData.quix_time);
+            const quizSql = "INSERT INTO quizs (title,category_id,quiz_time,created_by,difficulty) VALUES (?,?,?,?,?)";
+            db.query(quizSql, [quizeData.title, catDataId,formateTime, quizeData.created_by, quizeData.difficulty],
                 (err, result2) => {
 
                     if (err) {
