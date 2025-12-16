@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useFetcher, useLocation, useNavigate } from 'react-router-dom';
 import Quizs from './Quizs';
 import AdminDashboard from './AdminDashboard';
-import { User } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, User } from 'lucide-react';
 // import { FaUserCircle } from "react-icons/fa";
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
@@ -30,6 +30,7 @@ const AdminPage = () => {
     const [debouncedSearch, setDebouncedSearch] = useState("");
     
 const [selectedCategory, setSelectedCategory] = useState("");
+const [minutes,setMinutes]=useState("")
 
 
 
@@ -103,7 +104,8 @@ const [selectedCategory, setSelectedCategory] = useState("");
       title: `${topic} - ${difficulty} level`,
       category: category,
       difficulty: difficulty,
-      created_by:user.id
+      created_by:user.id,
+      quiz_time:minutes
     };
 
     // console.log('categoryData:', categoryData);
@@ -118,7 +120,9 @@ const [selectedCategory, setSelectedCategory] = useState("");
       
       if (resp.data.success) {
         alert("Quiz is created successfully")
+        fetchQuizs()
         // reset form (optional)
+        setGenrateQuizModal(true)
         setCreateQuizeModal(false)
         setcatagoryData({ category_name: '', topic_name: '', description: '' })
         setQuizeData({ title: '', difficulty: '' })
@@ -149,7 +153,7 @@ const [selectedCategory, setSelectedCategory] = useState("");
     category_name: '', topic_name: '', description: ''
   })
   const [quizeData, setQuizeData] = useState({
-    title: '', difficulty: '', created_by: user?.id
+    title: '', difficulty: '', created_by: user?.id,quiz_time:''
   })
   const blankQuestion = {
     question_text: '',
@@ -445,6 +449,58 @@ const [selectedCategory, setSelectedCategory] = useState("");
   })}
 </div>
 
+{openProfile && (
+  <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white w-80 rounded-2xl px-5 py-4 shadow-xl animate-fadeIn">
+      
+      <h2 className="text-base font-semibold text-gray-800 text-center mb-4">
+        User Profile
+      </h2>
+
+      <div className="space-y-3 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-500">Name</span>
+          <span className="font-medium text-gray-800 truncate">
+            {user?.name}
+          </span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-gray-500">Email</span>
+          <span className="font-medium text-gray-800 truncate">
+            {user?.email}
+          </span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-gray-500">Role</span>
+          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+            {user?.role || "User"}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-2">
+        <button
+          onClick={() => navigate("/login")}
+          className="w-full py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition"
+        >
+          Logout
+        </button>
+
+        <button
+          onClick={() => setOpenProfile(false)}
+          className="w-full py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+
       {
         activePage === "dashboard" && 
          <AdminDashboard></AdminDashboard>
@@ -550,56 +606,6 @@ const [selectedCategory, setSelectedCategory] = useState("");
 
 {/* user profile CONTENT */}
    {/* User Profile Modal */}
-{openProfile && (
-  <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-    <div className="bg-white w-80 rounded-2xl px-5 py-4 shadow-xl animate-fadeIn">
-      
-      <h2 className="text-base font-semibold text-gray-800 text-center mb-4">
-        User Profile
-      </h2>
-
-      <div className="space-y-3 text-sm">
-        <div className="flex justify-between">
-          <span className="text-gray-500">Name</span>
-          <span className="font-medium text-gray-800 truncate">
-            {user?.name}
-          </span>
-        </div>
-
-        <div className="flex justify-between">
-          <span className="text-gray-500">Email</span>
-          <span className="font-medium text-gray-800 truncate">
-            {user?.email}
-          </span>
-        </div>
-
-        <div className="flex justify-between">
-          <span className="text-gray-500">Role</span>
-          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-            {user?.role || "User"}
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-5 space-y-2">
-        <button
-          onClick={() => navigate("/login")}
-          className="w-full py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition"
-        >
-          Logout
-        </button>
-
-        <button
-          onClick={() => setOpenProfile(false)}
-          className="w-full py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
-        >
-          Close
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}
 
 
 
@@ -673,7 +679,7 @@ const [selectedCategory, setSelectedCategory] = useState("");
             </div>
 
             {/* Description & Difficulty */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description</label>
                 <input
@@ -696,6 +702,20 @@ const [selectedCategory, setSelectedCategory] = useState("");
                   <option value="Hard">Hard</option>
                 </select>
               </div>
+               <div>
+  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+    Quiz Time (Minutes)
+  </label>
+
+  <input
+    type="number"
+    min="1"
+    placeholder="Enter minutes"
+    value={quizeData.quiz_time}
+    onChange={(e) => quizeDataFunction('quiz_time',e.target.value)}
+    className="w-full border rounded px-2 py-1 text-sm"
+  />
+</div>
             </div>
 
             {/* Questions */}
@@ -749,11 +769,11 @@ const [selectedCategory, setSelectedCategory] = useState("");
                           onClick={(e) => { e.stopPropagation(); removeQuestion(idx); }}
                           className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
                         >
-                          {/* <Trash2 size={14} /> */}Delete
+                          <Trash2 size={14} />
                         </button>
                         {activeQuestionIndex === idx ?
-                        //  <ChevronUp size={14} className="text-gray-400" /> 
-                         ""
+                         <ChevronUp size={14} className="text-gray-400" /> 
+                         
                          : <ChevronDown size={14} className="text-gray-400" />}
                       </div>
                     </div>
@@ -941,6 +961,21 @@ const [selectedCategory, setSelectedCategory] = useState("");
                 />
               </div>
             </div>
+             <div>
+  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+    Quiz Time (Minutes)
+  </label>
+
+  <input
+    type="number"
+    min="1"
+    placeholder="Enter minutes"
+    value={minutes}
+    onChange={(e) => setMinutes(e.target.value)}
+    className="w-full border rounded px-2 py-1 text-sm"
+  />
+</div>
+
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">AI Instructions</label>
