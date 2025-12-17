@@ -312,8 +312,6 @@ db.query(updateMatch, [winnerId, matchId], (updateErr) => {
     });
 };
 
-
-// export const oneVsOneQuizeSubmit = (req, resp) => {
 //     const { matchId, quizId, userId, time, quize_type, questions } = req.body;
     
 //     console.log("📝 Quiz submission received:", { matchId, userId, quizId });
