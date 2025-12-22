@@ -5,9 +5,7 @@ import React, { useEffect, useState } from "react";
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
 const AdminDashboard = () => {
-
     const [dashBoardData,setDashBoardData]=useState(null)
-
     const fetchDashboardData=async()=>{
        try {
          const resp=await axios.get(`${BASE_URL}/get-dash-board-data`)
