@@ -478,6 +478,7 @@ export const updateQuiz = (req, resp) => {
     if (!quiz_id || !catagoryData || !quizeData || !questionsData) {
         return resp.status(400).json({ message: "All fields are required", success: false });
     }
+    
 
     // 🔹 1️⃣ UPDATE CATEGORY
     const updateCategorySql = `
