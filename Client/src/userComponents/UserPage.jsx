@@ -47,29 +47,29 @@ const UserPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [showWaitingModal, setShowWaitingModal] = useState(false)
   const [showTimeoutModal, setShowTimeoutModal] = useState(false)
-  const [timeLeft,setTimeLeft]=useState(null)
-  const [matchId,setMatchId]=useState(null)
-  const [waitResult,setWaitResult]=useState(false)
+  const [timeLeft, setTimeLeft] = useState(null)
+  const [matchId, setMatchId] = useState(null)
+  const [waitResult, setWaitResult] = useState(false)
   const [results, setResults] = useState(null);
-  const [showResult,setShowResult]=useState(false)
+  const [showResult, setShowResult] = useState(false)
 
 
 
-    useEffect(() => {
-        // Listen for match completion
-        socket.on('match_completed', (data) => {
-            console.log('Match completed!', data);
-            if(data){
-              setResults(data);
-              setWaitResult(false)
-              setShowResult(true);  
-            }
-            setWaitResult(false);
-            alert("match complete sucesfully")
-        });
+  useEffect(() => {
+    // Listen for match completion
+    socket.on('match_completed', (data) => {
+      console.log('Match completed!', data);
+      if (data) {
+        setResults(data);
+        setWaitResult(false)
+        setShowResult(true);
+      }
+      setWaitResult(false);
+      alert("match complete sucesfully")
+    });
 
-        return () => socket.off('match_completed');
-    }, []);
+    return () => socket.off('match_completed');
+  }, []);
 
 
   const handleSelect = (selected) => {
@@ -186,7 +186,7 @@ const UserPage = () => {
     console.log("userAns", userAns);
 
     setAttemptQuiz((prev) => ({
-      matchId:matchId,
+      matchId: matchId,
       quizId: selectedQuiz?.id,
       userId: user?.id,
       time: time,
@@ -266,8 +266,8 @@ const UserPage = () => {
       setMatchId(data.roomId)
       alert("Match Found! Quiz is starting");
       playQuizFunction(selectedQuiz);
-      const quizTimeSecond=data?.quiz_time || 
-      console.log("quiz time ",quizTimeSecond);
+      const quizTimeSecond = data?.quiz_time ||
+        console.log("quiz time ", quizTimeSecond);
       setTimeLeft(quizTimeSecond)
       console.log("Match started:", data);
     });
@@ -318,21 +318,21 @@ const UserPage = () => {
   };
 
   useEffect(() => {
-  if (timeLeft === null) return;
+    if (timeLeft === null) return;
 
-  if (timeLeft <= 0) {
-    alert("Time up! Quiz submitted automatically.");
-    setModalPlayQuiz(false)
-    setLiveAttemptModal(false)
-    return;
-  }
+    if (timeLeft <= 0) {
+      alert("Time up! Quiz submitted automatically.");
+      setModalPlayQuiz(false)
+      setLiveAttemptModal(false)
+      return;
+    }
 
-  const timer = setInterval(() => {
-    setTimeLeft((prev) => prev - 1);
-  }, 1000);
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
 
-  return () => clearInterval(timer);
-}, [timeLeft]);
+    return () => clearInterval(timer);
+  }, [timeLeft]);
 
   const playAttemptFunction = () => {
     setLiveAttemptModal(true)
@@ -356,64 +356,64 @@ const UserPage = () => {
 
 
   // ove vs one quize result save 
-const submitOneVsOneQuiz = async () => {
-  console.log("one vs one submit fun executed");
+  const submitOneVsOneQuiz = async () => {
+    console.log("one vs one submit fun executed");
 
-  // Case 1: Move to next question
-  if (currentIndex < selectedQuiz.questions.length - 1) {
-    setCurrentIndex((prev) => prev + 1);
-    setSelectedOption(null);
-    return;  // Return here to stop execution
-  }
-
-  // Case 2: Last question -> Submit quiz
-  if (currentIndex === selectedQuiz.questions.length - 1) {
-    setIsRunning(false);
-    handleSubmitQuiz();
-
-    try {
-      const resp = await axios.post(
-        `${BASE_URL}/submit-oneVsone-quiz/${user?.id}`,
-        attemptQuize
-      );
-
-      console.log("resp of submit quiz", resp);
-
-      const result = resp?.data?.data;
-      const success = resp?.data?.success;
-
-      if (!success) {
-        alert("Something went wrong");
-        return;
-      }
-
-      // CASE A: MATCH IS DRAW
-      if (result?.isDraw === true) {
-        setShowResult(true);        // Show draw result screen
-        return;
-      }
-
-      // CASE B: NORMAL RESULT (WIN/LOSE)
-      setModalPlayQuiz(false);
-      setWaitResult(true);
-      setScoreData(result);
-      return;
-
-    } catch (error) {
-      console.log(error);
-      alert("Quiz is not submitted");
+    // Case 1: Move to next question
+    if (currentIndex < selectedQuiz.questions.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+      setSelectedOption(null);
+      return;  // Return here to stop execution
     }
-  }
 
-  // Case 3: Should not reach here
-  alert("Quiz Finished!");
-};
+    // Case 2: Last question -> Submit quiz
+    if (currentIndex === selectedQuiz.questions.length - 1) {
+      setIsRunning(false);
+      handleSubmitQuiz();
+
+      try {
+        const resp = await axios.post(
+          `${BASE_URL}/submit-oneVsone-quiz/${user?.id}`,
+          attemptQuize
+        );
+
+        console.log("resp of submit quiz", resp);
+
+        const result = resp?.data?.data;
+        const success = resp?.data?.success;
+
+        if (!success) {
+          alert("Something went wrong");
+          return;
+        }
+
+        // CASE A: MATCH IS DRAW
+        if (result?.isDraw === true) {
+          setShowResult(true);        // Show draw result screen
+          return;
+        }
+
+        // CASE B: NORMAL RESULT (WIN/LOSE)
+        setModalPlayQuiz(false);
+        setWaitResult(true);
+        setScoreData(result);
+        return;
+
+      } catch (error) {
+        console.log(error);
+        alert("Quiz is not submitted");
+      }
+    }
+
+    // Case 3: Should not reach here
+    alert("Quiz Finished!");
+  };
 
 
 
 
 
-// regular quize result  save 
+  // regular quize result  save 
   const submitPlayQuiz = async () => {
     if (currentIndex < selectedQuiz.questions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
@@ -714,7 +714,7 @@ const submitOneVsOneQuiz = async () => {
                     }
                     <button
                       className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
-                      onClick={() => {playQuizFunction(quiz); setSelectedQuiz(quiz)}}
+                      onClick={() => { playQuizFunction(quiz); setSelectedQuiz(quiz) }}
                     >
                       ▶ Play Quiz
                     </button>
@@ -775,20 +775,20 @@ const submitOneVsOneQuiz = async () => {
                 {currentIndex + 1}/{selectedQuiz?.questions?.length}
               </div>
 
-          {/* default time  */}
+              {/* default time  */}
 
               <div className="text-right text-md font-bold">
                 ⏱ {formatTime(timePassed)}
               </div>
 
               {/* for one vs one quize real time fetch in db  */}
-   {timeLeft !== null && (
-  <div className="text-right text-md font-bold text-black">
-    Time Left: 
-    {Math.floor(timeLeft / 60)}:
-    {String(timeLeft % 60).padStart(2, "0")}
-  </div>
-)}
+              {timeLeft !== null && (
+                <div className="text-right text-md font-bold text-black">
+                  Time Left:
+                  {Math.floor(timeLeft / 60)}:
+                  {String(timeLeft % 60).padStart(2, "0")}
+                </div>
+              )}
 
 
 
@@ -862,8 +862,8 @@ const submitOneVsOneQuiz = async () => {
               {/* Save & Next Button for one vs one  */}
               <button
                 // onClick={() => playOneVsOneModal === true ? submitOneVsOneQuiz() :submitPlayQuiz() }
-                onClick={() => playOneVsOneModal === true ? submitOneVsOneQuiz() :submitOneVsOneQuiz() }
-                
+                onClick={() => playOneVsOneModal === true ? submitOneVsOneQuiz() : submitOneVsOneQuiz()}
+
                 className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
               >
                 {currentIndex === selectedQuiz?.questions?.length - 1 ? "Submit socket io" : "Save & Next"}
@@ -1479,139 +1479,136 @@ const submitOneVsOneQuiz = async () => {
 
       {
         waitResult && (
-           <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl text-center">
-            <h2 className="text-lg font-semibold">Waiting for Result</h2>
-            <p className="text-gray-600 mt-2">Wait for another players submit this quiz</p>
-            <div className="loader mt-4" />
-            <button className="mt-4 bg-red-500 text-white px-4 py-2 rounded" onClick={() => setWaitResult(false)} > Cancel </button>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-xl text-center">
+              <h2 className="text-lg font-semibold">Waiting for Result</h2>
+              <p className="text-gray-600 mt-2">Wait for another players submit this quiz</p>
+              <div className="loader mt-4" />
+              <button className="mt-4 bg-red-500 text-white px-4 py-2 rounded" onClick={() => setWaitResult(false)} > Cancel </button>
+            </div>
           </div>
-        </div>
 
         )
       }
-      
-{showResult && results && (
-  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
 
-    <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl w-[380px] p-6 shadow-2xl animate-fadeIn">
+      {showResult && results && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
 
-      {/* Winner / Draw Title */}
-      <div className="text-center">
-        {results.isDraw ? (
-          <h2 className="text-2xl font-bold text-blue-300 drop-shadow-md">
-            Match Draw
-          </h2>
-        ) : (
-          <h2
-            className={`text-2xl font-bold drop-shadow-md ${
-              results.winnerId === user?.id ? "text-green-300" : "text-red-300"
-            }`}
-          >
-            {results.winnerId === user?.id ? "Victory!" : "Defeat"}
-          </h2>
-        )}
+          <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl w-[380px] p-6 shadow-2xl animate-fadeIn">
 
-        {/* Subtitles */}
-        {!results.isDraw ? (
-          <p className="text-white/80 text-sm mt-1">
-            {results.winnerId === user?.id
-              ? "You outperformed your opponent."
-              : "Try again to claim victory."}
-          </p>
-        ) : (
-          <p className="text-white/80 text-sm mt-1">Both players performed equally well.</p>
-        )}
-      </div>
+            {/* Winner / Draw Title */}
+            <div className="text-center">
+              {results.isDraw ? (
+                <h2 className="text-2xl font-bold text-blue-300 drop-shadow-md">
+                  Match Draw
+                </h2>
+              ) : (
+                <h2
+                  className={`text-2xl font-bold drop-shadow-md ${results.winnerId === user?.id ? "text-green-300" : "text-red-300"
+                    }`}
+                >
+                  {results.winnerId === user?.id ? "Victory!" : "Defeat"}
+                </h2>
+              )}
 
-      {/* Trophy Animation */}
-      <div className="flex justify-center mt-4">
-        {!results.isDraw ? (
-          <div className="bg-yellow-400 w-24 h-24 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-            🏆
+              {/* Subtitles */}
+              {!results.isDraw ? (
+                <p className="text-white/80 text-sm mt-1">
+                  {results.winnerId === user?.id
+                    ? "You outperformed your opponent."
+                    : "Try again to claim victory."}
+                </p>
+              ) : (
+                <p className="text-white/80 text-sm mt-1">Both players performed equally well.</p>
+              )}
+            </div>
+
+            {/* Trophy Animation */}
+            <div className="flex justify-center mt-4">
+              {!results.isDraw ? (
+                <div className="bg-yellow-400 w-24 h-24 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                  🏆
+                </div>
+              ) : (
+                <div className="bg-blue-400 w-24 h-24 rounded-full flex items-center justify-center shadow-lg">
+                  🤝
+                </div>
+              )}
+            </div>
+
+            {/* Players Section */}
+            <div className="mt-6 grid grid-cols-2 gap-4">
+
+              {/* Player 1 */}
+              <div
+                className={`p-4 rounded-xl text-center transition-all ${results.winnerId === results.results.player1.userId
+                  ? "bg-green-200/20 border border-green-400 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                  : "bg-white/10 border border-white/20"
+                  }`}
+              >
+                <p className="font-semibold text-white text-sm">
+                  {results.results.player1.user?.name}
+                </p>
+                <p className="font-semibold text-white text-sm">
+                  {results.results.player1.user?.email}
+                </p>
+                <p className="text-white/80 text-xs mt-1">
+                  Score: {results.results.player1.score}
+                </p>
+                <p className="text-white/80 text-xs">
+                  Correct: {results.results.player1.correctAnswers}
+                </p>
+                <p className="text-white/80 text-xs">
+                  Wrong: {results.results.player1.wrongAnswers}
+                </p>
+                <p className="text-white/80 text-xs">
+                  Coins: {results.results.player1.user.coins}
+                </p>
+              </div>
+
+              {/* Player 2 */}
+              <div
+                className={`p-4 rounded-xl text-center transition-all ${results.winnerId === results.results.player2.userId
+                  ? "bg-green-200/20 border border-green-400 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                  : "bg-white/10 border border-white/20"
+                  }`}
+              >
+                <p className="font-semibold text-white text-sm">
+                  {results.results.player2.user?.name}
+                </p>
+                <p className="font-semibold text-white text-sm">
+                  {results.results.player2.user?.email}
+                </p>
+                <p className="text-white/80 text-xs mt-1">
+                  Score: {results.results.player2.score}
+                </p>
+                <p className="text-white/80 text-xs">
+                  Correct: {results.results.player2.correctAnswers}
+                </p>
+                <p className="text-white/80 text-xs">
+                  Wrong: {results.results.player2.wrongAnswers}
+                </p>
+                <p className="text-white/80 text-xs">
+                  Coins: {results.results.player2.user.coins}
+                </p>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <div className="mt-6 text-center">
+              <button
+                className="px-6 py-2 rounded-xl bg-red-500 text-white font-medium shadow-lg hover:bg-red-600 transition"
+                onClick={() => setShowResult(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="bg-blue-400 w-24 h-24 rounded-full flex items-center justify-center shadow-lg">
-            🤝
-          </div>
-        )}
-      </div>
-
-      {/* Players Section */}
-      <div className="mt-6 grid grid-cols-2 gap-4">
-
-        {/* Player 1 */}
-        <div
-          className={`p-4 rounded-xl text-center transition-all ${
-            results.winnerId === results.results.player1.userId
-              ? "bg-green-200/20 border border-green-400 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
-              : "bg-white/10 border border-white/20"
-          }`}
-        >
-          <p className="font-semibold text-white text-sm">
-            {results.results.player1.user?.name}
-          </p>
-           <p className="font-semibold text-white text-sm">
-            {results.results.player1.user?.email}
-          </p>
-          <p className="text-white/80 text-xs mt-1">
-            Score: {results.results.player1.score}
-          </p>
-          <p className="text-white/80 text-xs">
-            Correct: {results.results.player1.correctAnswers}
-          </p>
-          <p className="text-white/80 text-xs">
-            Wrong: {results.results.player1.wrongAnswers}
-          </p>
-          <p className="text-white/80 text-xs">
-            Coins: {results.results.player1.user.coins}
-          </p>
         </div>
-
-        {/* Player 2 */}
-        <div
-          className={`p-4 rounded-xl text-center transition-all ${
-            results.winnerId === results.results.player2.userId
-              ? "bg-green-200/20 border border-green-400 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
-              : "bg-white/10 border border-white/20"
-          }`}
-        >
-          <p className="font-semibold text-white text-sm">
-            {results.results.player2.user?.name}
-          </p>
-           <p className="font-semibold text-white text-sm">
-            {results.results.player2.user?.email}
-          </p>
-          <p className="text-white/80 text-xs mt-1">
-            Score: {results.results.player2.score}
-          </p>
-          <p className="text-white/80 text-xs">
-            Correct: {results.results.player2.correctAnswers}
-          </p>
-          <p className="text-white/80 text-xs">
-            Wrong: {results.results.player2.wrongAnswers}
-          </p>
-          <p className="text-white/80 text-xs">
-            Coins: {results.results.player2.user.coins}
-          </p>
-        </div>
-      </div>
-
-      {/* Close Button */}
-      <div className="mt-6 text-center">
-        <button
-          className="px-6 py-2 rounded-xl bg-red-500 text-white font-medium shadow-lg hover:bg-red-600 transition"
-          onClick={() => setShowResult(false)}
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
 
-  
+
 
 
     </>

@@ -641,8 +641,8 @@ const AdminPage = () => {
                                 key={cat.value}
                                 onClick={() => catagoryDataFunction("category_name", cat.value)}
                                 className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${catagoryData.category_name === cat.value
-                                    ? 'bg-red-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                   }`}
                               >
                                 {cat.value}
