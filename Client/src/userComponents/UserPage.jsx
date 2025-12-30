@@ -483,21 +483,23 @@ const UserPage = () => {
         {/* Right Section */}
         <div className="flex items-center gap-4">
 
-          {/* <button
+          <button
             onClick={() => playAttemptFunction()}
             className="
     flex items-center justify-center gap-2 
-    bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600
-    text-white font-semibold px-5 py-2.5
-    rounded-2xl shadow-md 
+    bg-gradient-to-r from-purple-600 to-indigo-600
+    text-white font-semibold px-4 py-2 
+    rounded-xl shadow-lg 
     transition-all duration-200 
-    hover:shadow-purple-500/40 hover:scale-[1.04]
+    hover:shadow-xl hover:scale-105 
     active:scale-95
-    tracking-wide text-sm
   "
           >
-            <span className="font-medium">Live Attempt</span>
-          </button> */}
+            {/* <span className="text-sm tracking-wide">DocTalkAi</span> */}
+            <span className="text-sm tracking-wide">StudyBot</span>
+
+            
+          </button>
 
           <button
             className="
@@ -512,6 +514,7 @@ const UserPage = () => {
             onClick={() => playOneVsOneFunction()}
           >
             <span className="text-sm tracking-wide">Play 1 V/S 1</span>
+
           </button>
 
           {/* Coins */}
