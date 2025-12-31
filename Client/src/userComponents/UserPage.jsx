@@ -4,6 +4,7 @@ import { data, useLocation, useNavigate } from "react-router-dom";
 import TopHeader from "../components/TopHeader";
 import Pagination from "../components/Pagination";
 import { io } from "socket.io-client";
+import Chatpage from "../components/Chatpage";
 
 const socket = io("http://localhost:8000")
 
@@ -52,6 +53,7 @@ const UserPage = () => {
   const [waitResult, setWaitResult] = useState(false)
   const [results, setResults] = useState(null);
   const [showResult, setShowResult] = useState(false)
+  const [startChat,setStartChat]=useState(false)
 
 
 
@@ -496,7 +498,7 @@ const UserPage = () => {
   "
           >
             {/* <span className="text-sm tracking-wide">DocTalkAi</span> */}
-            <span className="text-sm tracking-wide">StudyBot</span>
+            <span className="text-sm tracking-wide" onClick={()=>setStartChat(true)}>StudyBot</span>
 
             
           </button>
@@ -1610,6 +1612,11 @@ const UserPage = () => {
         </div>
       )}
 
+{
+  startChat && (
+    <Chatpage></Chatpage>
+  )
+}
 
 
 
