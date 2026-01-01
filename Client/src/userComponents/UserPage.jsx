@@ -486,7 +486,7 @@ const UserPage = () => {
         <div className="flex items-center gap-4">
 
           <button
-            onClick={() => playAttemptFunction()}
+           onClick={()=>setStartChat(true)}
             className="
     flex items-center justify-center gap-2 
     bg-gradient-to-r from-purple-600 to-indigo-600
@@ -498,7 +498,7 @@ const UserPage = () => {
   "
           >
             {/* <span className="text-sm tracking-wide">DocTalkAi</span> */}
-            <span className="text-sm tracking-wide" onClick={()=>setStartChat(true)}>StudyBot</span>
+            <span className="text-sm tracking-wide" >StudyBot</span>
 
             
           </button>
@@ -1611,14 +1611,23 @@ const UserPage = () => {
           </div>
         </div>
       )}
+{startChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          {/* Modal Box */}
+          <div className="relative w-[90%] h-[60] bg-white rounded-lg shadow-lg">
+            {/* Close Button */}
+            <button
+              onClick={() => setStartChat(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-black text-xl"
+            >
+              ✕
+            </button>
 
-{
-  startChat && (
-    <Chatpage></Chatpage>
-  )
-}
-
-
+            {/* Chat Content */}
+            <Chatpage />
+          </div>
+        </div>
+      )}
 
 
     </>
