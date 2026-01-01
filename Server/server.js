@@ -6,6 +6,7 @@ import quizeRoute from './routes/adminRoutes/quizeRoutes.js'
 import http from "http"
 import { Server } from 'socket.io'
 import { OneVsOne, oneVsOneQuizeSubmit } from './socketIo/oneVsOne.js'
+import chatRoute from './routes/userRoutes/chat.route.js'
 
 dotenv.config()
 
@@ -23,6 +24,7 @@ OneVsOne(io)
 
 app.use('/api/v1', authRoute)
 app.use('/api/v1', quizeRoute)
+app.use('/api/v1/chat-with-doc',chatRoute)
 app.post('/api/v1/submit-oneVsone-quiz/:user_id', oneVsOneQuizeSubmit)
 
 server.listen(process.env.PORT || 8000, () => {
