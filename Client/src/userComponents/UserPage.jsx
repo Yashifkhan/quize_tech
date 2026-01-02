@@ -1614,7 +1614,7 @@ const UserPage = () => {
 {startChat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           {/* Modal Box */}
-          <div className="relative w-[90%] h-[60] bg-white rounded-lg shadow-lg">
+          <div className="relative w-[90%] h-[50] bg-white rounded-lg shadow-lg">
             {/* Close Button */}
             <button
               onClick={() => setStartChat(false)}

@@ -56,7 +56,7 @@ const ChatPage = () => {
   
 
   return (
-    <div className="flex h-screen bg-[#efe7de]">
+    <div className="flex h-screen bg-[#efe7de] ">
       
       {/* LEFT: USER SECTION */}
       <div className="w-1/2 flex flex-col border-r border-gray-300">
