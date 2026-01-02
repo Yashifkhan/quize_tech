@@ -10,6 +10,8 @@ const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 
 
 export const startChatController = async (req, res) => {
+  // setupPinecone();
+
   const filePath = req.file?.path; // Store path for cleanup
 
   try {
@@ -22,13 +24,13 @@ export const startChatController = async (req, res) => {
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    
-    // 1. Vision Extraction
+    // const visionModel = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
     // const visionModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const visionModel = genAI.getGenerativeModel({model: "gemini-3-flash-preview" });
-    
-    // console.log("gen ai visionModel ",visionModel);
-    
+        const visionModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite-preview" });
+
+
+
+
     const imageParts = [{
       inlineData: {
         data: fs.readFileSync(filePath).toString("base64"),
@@ -40,19 +42,65 @@ export const startChatController = async (req, res) => {
     const visionResult = await visionModel.generateContent([visionPrompt, ...imageParts]);
     const extractedDescription = visionResult.response.text();
 
-    // 2. Embedding Generation
     const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
-    const embeddingResult = await embeddingModel.embedContent(extractedDescription);
+    const embeddingResult = await embeddingModel.embedContent(text);
     const vectorValues = embeddingResult.embedding.values;
 
-    // 3. Pinecone Upsert
     const index = pc.index(process.env.PINECONE_INDEX);
+console.log("text",text);
+
+
+
+
+    const queryResponse = await index.query({
+      vector: vectorValues,
+      topK: 3,                // Number of results to return (top 3 matches)
+      includeMetadata: true,   // This returns the original text/description you stored
+    });
+
+    const matches = queryResponse.matches.map(match => ({
+      score: match.score,      
+      text: match.metadata.description,
+      fileName: match.metadata.fileName
+    }));
+
+    const contextText = queryResponse.matches
+  .map(match => match.metadata.description)
+  .join("\n\n---\n\n");
+
+  const finalPrompt = `
+  You are an expert career consultant and resume reviewer. 
+  Below is the data retrieved from a resume database. 
+  Use ONLY this context to answer the user's question.
+
+  ---
+  CONTEXT:
+  ${contextText}
+  ---
+
+  USER QUESTION: 
+  ${text}
+
+  INSTRUCTIONS:
+  - If the user asks for a score, evaluate the skills, projects, and education.
+  - Be professional and encouraging.
+  - If the information is not in the context, say "I don't have enough information in the documents to answer that."
+`;
+
+const result=await visionModel.generateContent(finalPrompt);
+console.log("Final Response:", result.response.text());
+
+console.log("finalAnswer",finalAnswer);
+
+    // console.log("matches result",matches);
+    
+
     await index.upsert([{
       id: `${Date.now()}-${file.originalname}`,
       values: vectorValues,
-      metadata: { 
-        description: extractedDescription, 
-        fileName: file.originalname 
+      metadata: {
+        description: extractedDescription,
+        fileName: file.originalname
       }
     }]);
 
@@ -71,3 +119,4 @@ export const startChatController = async (req, res) => {
     }
   }
 };
+

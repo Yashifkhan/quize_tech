@@ -479,7 +479,6 @@ export const updateQuiz = (req, resp) => {
         return resp.status(400).json({ message: "All fields are required", success: false });
     }
     
-
     // 🔹 1️⃣ UPDATE CATEGORY
     const updateCategorySql = `
         UPDATE category
