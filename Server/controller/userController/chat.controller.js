@@ -159,10 +159,18 @@ export const startChatController = async (req, res) => {
       return res.status(400).json({ error: "Question is required" });
     }
 
-    const SYSTEM_PROMPT = `
-You are Aura AI, a document and image-based assistant.
-Answer clearly and accurately.
-Use provided context only when relevant.
+    const SYSTEM_PROMPT_IMAGE = `
+You are Aura AI.
+The user has uploaded an IMAGE.
+Answer strictly based on the content visible in the image.
+Explain clearly in simple language.
+Do NOT assume anything outside the image.
+If something is unclear, say it explicitly.
+`;
+
+    const SYSTEM_PROMPT_TEXT = `
+You are Aura AI, a document-based assistant.
+Answer clearly and accurately using provided context only.
 `;
 
     const embeddingModel = genAI.getGenerativeModel({
@@ -173,40 +181,45 @@ Use provided context only when relevant.
 
     let extractedText = "";
 
-    /* --------------------------------------------------
+    /* -------------------------------------------
        STEP 1: IMAGE → OCR
-    -------------------------------------------------- */
+    -------------------------------------------- */
     if (file) {
       const ocrResult = await Tesseract.recognize(filePath, "eng");
-      extractedText = ocrResult.data.text?.trim() || "";
+      extractedText = ocrResult?.data?.text?.trim() || "";
     }
 
-    /* --------------------------------------------------
-       STEP 2: IMAGE MODE (DIRECT ANSWER)
-       👉 NO VECTOR SEARCH
-    -------------------------------------------------- */
-    if (file && extractedText.length > 20) {
+    /* -------------------------------------------
+       STEP 2: IMAGE + QUESTION → IMAGE QA
+    -------------------------------------------- */
+    if (file) {
+      if (!extractedText || extractedText.length < 10) {
+        return res.status(200).json({
+          success: true,
+          answer:
+            "I can see an image, but I am unable to clearly read text from it. Please upload a clearer image or describe what you want to understand.",
+          mode: "image-ocr-failed",
+        });
+      }
+
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT_IMAGE },
           {
             role: "user",
             content: `
-This is the extracted text from an image:
-
+Extracted text from image:
 ${extractedText}
 
 User question:
 ${text}
-
-Explain clearly based ONLY on the image content.
             `,
           },
         ],
       });
 
-      /* Optional: store image for future reference */
+      /* Optional: store image text for future retrieval */
       const imageEmbedding = await embeddingModel.embedContent(extractedText);
 
       await index.upsert([
@@ -224,13 +237,13 @@ Explain clearly based ONLY on the image content.
       return res.status(200).json({
         success: true,
         answer: completion.choices[0].message.content,
-        mode: "image-direct",
+        mode: "image-explain",
       });
     }
 
-    /* --------------------------------------------------
+    /* -------------------------------------------
        STEP 3: TEXT ONLY → VECTOR SEARCH
-    -------------------------------------------------- */
+    -------------------------------------------- */
     const queryEmbedding = await embeddingModel.embedContent(text);
 
     const searchResult = await index.query({
@@ -243,14 +256,14 @@ Explain clearly based ONLY on the image content.
     const bestMatch = matches[0];
     const SIMILARITY_THRESHOLD = 0.75;
 
-    /* --------------------------------------------------
-       STEP 4: WEAK MATCH → DIRECT LLM
-    -------------------------------------------------- */
+    /* -------------------------------------------
+       STEP 4: LOW SIMILARITY → DIRECT LLM
+    -------------------------------------------- */
     if (!bestMatch || bestMatch.score < SIMILARITY_THRESHOLD) {
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT_TEXT },
           { role: "user", content: text },
         ],
       });
@@ -262,9 +275,9 @@ Explain clearly based ONLY on the image content.
       });
     }
 
-    /* --------------------------------------------------
+    /* -------------------------------------------
        STEP 5: STRONG MATCH → RAG
-    -------------------------------------------------- */
+    -------------------------------------------- */
     const context = matches
       .map(m => m.metadata?.description)
       .join("\n\n---\n\n");
@@ -272,7 +285,7 @@ Explain clearly based ONLY on the image content.
     const completion = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: SYSTEM_PROMPT_TEXT },
         {
           role: "user",
           content: `
@@ -306,8 +319,6 @@ If not found, say:
     }
   }
 };
-
-
 
 
 export const chatTestController = async (req, res) => {
@@ -382,7 +393,7 @@ const isSystemQuery = (text) => {
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          // { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: text },
         ],
       });
