@@ -53,7 +53,7 @@ const UserPage = () => {
   const [waitResult, setWaitResult] = useState(false)
   const [results, setResults] = useState(null);
   const [showResult, setShowResult] = useState(false)
-  const [startChat,setStartChat]=useState(false)
+  const [startChat, setStartChat] = useState(false)
 
 
 
@@ -486,7 +486,7 @@ const UserPage = () => {
         <div className="flex items-center gap-4">
 
           <button
-           onClick={()=>setStartChat(true)}
+            onClick={() => setStartChat(true)}
             className="
     flex items-center justify-center gap-2 
     bg-gradient-to-r from-purple-600 to-indigo-600
@@ -500,7 +500,7 @@ const UserPage = () => {
             {/* <span className="text-sm tracking-wide">DocTalkAi</span> */}
             <span className="text-sm tracking-wide" >StudyBot</span>
 
-            
+
           </button>
 
           <button
@@ -1611,7 +1611,7 @@ const UserPage = () => {
           </div>
         </div>
       )}
-{startChat && (
+      {startChat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           {/* Modal Box */}
           <div className="relative w-[90%] h-[100] bg-white rounded-lg shadow-lg">
