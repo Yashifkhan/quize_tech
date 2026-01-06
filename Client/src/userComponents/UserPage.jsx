@@ -7,7 +7,6 @@ import { io } from "socket.io-client";
 import Chatpage from "../components/Chatpage";
 
 const socket = io("http://localhost:8000")
-
 const BASE_URL = import.meta.env.VITE_APP_BASE_URL;
 
 const UserPage = () => {
