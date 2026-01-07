@@ -327,7 +327,6 @@ export const chatTestController = async (req, res) => {
     if (!text) {
       return res.status(400).json({ error: "Question is required" });
     }
-
     const SYSTEM_PROMPT = `
 You are Aura AI, an intelligent coding assistant.
 
@@ -376,9 +375,7 @@ const isSystemQuery = (text) => {
     });
 
     const queryEmbedding = await embeddingModel.embedContent(text);
-
     const index = pc.index(process.env.PINECONE_INDEX);
-
     const searchResult = await index.query({
       vector: queryEmbedding.embedding.values,
       topK: 3,
