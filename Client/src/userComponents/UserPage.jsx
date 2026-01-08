@@ -475,60 +475,62 @@ const UserPage = () => {
   return (
     <>
       {/* HEADER */}
-      <div className="p-4 shadow-lg bg-white flex items-center justify-between">
-
+      <div
+        className="
+        w-full h-16 bg-white shadow-md 
+        flex items-center justify-between 
+        px-6 fixed top-0 left-0 z-50
+      "
+      >
         {/* Logo / Title */}
-        <h1 className="font-bold text-lg">Quize Tech</h1>
-
+        <h1 className="text-2xl font-bold text-gray-800">
+          Quiz Tech
+        </h1>
 
         {/* Right Section */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
 
           <button
             onClick={() => setStartChat(true)}
             className="
-    flex items-center justify-center gap-2 
-    bg-gradient-to-r from-purple-600 to-indigo-600
-    text-white font-semibold px-4 py-2 
-    rounded-xl shadow-lg 
-    transition-all duration-200 
-    hover:shadow-xl hover:scale-105 
-    active:scale-95
-  "
+            bg-white hover:bg-gray-50 text-green-500 border border-green-500 
+            px-3 py-1 rounded-full shadow-sm transition-all duration-200 
+            flex items-center gap-2 text-sm
+            hover:scale-105 active:scale-95
+          "
           >
-            {/* <span className="text-sm tracking-wide">DocTalkAi</span> */}
-            <span className="text-sm tracking-wide" >StudyBot</span>
-
-
+            <span className="text-xs">StudyBot</span>
           </button>
 
           <button
-            className="
-    flex items-center justify-center gap-2 
-    bg-gradient-to-r from-purple-600 to-indigo-600
-    text-white font-semibold px-4 py-2 
-    rounded-xl shadow-lg 
-    transition-all duration-200 
-    hover:shadow-xl hover:scale-105 
-    active:scale-95
-  "
             onClick={() => playOneVsOneFunction()}
+            className="
+            bg-white hover:bg-gray-50 text-green-500 border border-green-500 
+            px-3 py-1 rounded-full shadow-sm transition-all duration-200 
+            flex items-center gap-2 text-sm
+            hover:scale-105 active:scale-95
+          "
           >
-            <span className="text-sm tracking-wide">Play 1 V/S 1</span>
-
+            <span className="text-xs">Play 1 V/S 1</span>
           </button>
 
           {/* Coins */}
-          <div className="leading-tight text-right">
-            <p className="text-[11px] font-medium">Winning Coins</p>
-            <h1 className="text-2xl font-extrabold">{user?.coins || 0}</h1>
+          <div className="leading-tight text-right px-3">
+            <p className="text-[10px] font-medium text-gray-500">Coins</p>
+            <h1 className="text-lg font-bold text-gray-800">{user?.coins || 0}</h1>
           </div>
 
           {/* Profile Button */}
           <button
             onClick={() => setOpenProfile(true)}
-            className="w-12 h-12 rounded-2xl bg-gray-900 text-white flex items-center justify-center 
-      text-lg font-bold shadow-xl hover:bg-gray-700 transition active:scale-95"
+            className="
+            bg-green-500 text-white p-2 
+            rounded-full shadow-md 
+            hover:shadow-lg transition-all 
+            hover:scale-105 active:scale-95
+            w-10 h-10 flex items-center justify-center
+            text-sm font-bold
+          "
           >
             {user?.name?.[0]?.toUpperCase() || "U"}
           </button>
@@ -538,58 +540,76 @@ const UserPage = () => {
 
       {/* user profile CONTENT */}
       {openProfile && (
-        <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white w-80 rounded-xl p-6 shadow-lg animate-fadeIn">
-            <h2 className="text-xl font-bold mb-4 text-center">User Profile</h2>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white w-80 rounded-2xl px-5 py-4 shadow-xl animate-fadeIn">
 
-            <div className="space-y-2">
-              <p>
-                <span className="font-semibold">Name:</span> {user?.name}
-              </p>
-              <p>
-                <span className="font-semibold">Email:</span> {user?.email}
-              </p>
-              <p>
-                <span className="font-semibold">Role:</span>{" "}
-                {user?.role || "User"}
-              </p>
+            <h2 className="text-base font-semibold text-gray-800 text-center mb-4">
+              User Profile
+            </h2>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Name</span>
+                <span className="font-medium text-gray-800 truncate">
+                  {user?.name}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-500">Email</span>
+                <span className="font-medium text-gray-800 truncate">
+                  {user?.email}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-500">Role</span>
+                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                  {user?.role || "User"}
+                </span>
+              </div>
             </div>
 
+            <div className="mt-5 space-y-2">
+              <button
+                onClick={() => { naviagat('/login') }}
+                className="w-full py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition"
+              >
+                Logout
+              </button>
 
-            <button
-              onClick={() => { naviagat('/login') }}
-              className="mt-6 bg-gray-900 text-white w-full py-2 rounded-lg hover:bg-gray-700 transition"
-            >
-              Logout
-            </button>
+              <button
+                onClick={() => setOpenProfile(false)}
+                className="w-full py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+              >
+                Close
+              </button>
+            </div>
 
-            <button
-              onClick={() => setOpenProfile(false)}
-              className="mt-2 bg-gray-900 text-white w-full py-2 rounded-lg hover:bg-gray-700 transition"
-            >
-              Close
-            </button>
           </div>
         </div>
       )}
 
 
       {/* all quize  */}
-      <div className="pt-6 px-8">
-        <div className="flex justify-between items-center p-3 border-amber-50 shadow-sm mb-4">
-          <h1 className="text-xl font-bold text-black">All Quizzes</h1>
+      <div className="pt-20 px-6">
+        {/* Quiz Management Header with Filters */}
+        <div className="bg-white shadow rounded-lg p-4 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h1 className="text-xl font-semibold text-gray-800">All Quizzes</h1>
+          
           {/* Filter for search quiz */}
-          <div className="flex items-center gap-3 p-2">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {/* search bar  */}
-            <div className="flex items-center ">
-              <input type="text" className=" border p-1  text-sm shadow-xs border-gray-100 rounded-lg w-40" placeholder="search quize"
-                onChange={(e) => handleSearch(e)}
-              />
-            </div>
+            <input 
+              type="text" 
+              className="border border-gray-300 px-4 text-sm rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 w-full sm:w-auto" 
+              placeholder="Search quiz..."
+              onChange={(e) => handleSearch(e)}
+            />
 
             {/* Difficulty */}
             <select
-              className="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 rounded-lg text-sm py-1 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none border border-gray-300 bg-white transition-all duration-200"
               onChange={(e) => setSelectedDiff(e.target.value)}
             >
               <option value="all">Select Difficulty</option>
@@ -598,90 +618,72 @@ const UserPage = () => {
               <option value="hard">Hard</option>
             </select>
 
-            {/* Category (data will come from loop) */}
+            {/* Category */}
             <select
-              className="px-3 py-1 border rounded-lg focus:outline-none w-40 focus:ring-2 focus:ring-blue-500"
+              className="px-4 rounded-lg text-sm py-1 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none border border-gray-300 bg-white transition-all duration-200 w-full sm:w-auto"
               onChange={(e) => setSelectCat(e.target.value)}
             >
               <option value="">Select Category</option>
-              {/* Example dynamic */}
               {categoryTopic?.map((t) => (
                 <option key={t.id} value={t.category_name}>{t.category_name}</option>
               ))}
-
             </select>
 
-            {/* Topic (data will come from loop) */}
+            {/* Topic */}
             <select
-              className="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="px-4 rounded-lg text-sm py-1 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none border border-gray-300 bg-white transition-all duration-200 w-full sm:w-auto"
               onChange={(e) => setSelectedTopic(e.target.value)}
             >
               <option value="">Select Topic</option>
-
-              {
-                quizs?.length > 0 && quizs?.map((t) => (
-                  <option key={t.id} value={t?.category?.[0]?.topic_name}>
-                    {t?.category?.[0]?.topic_name}
-                  </option>
-                ))}
-
-
+              {quizs?.length > 0 && quizs?.map((t) => (
+                <option key={t.id} value={t?.category?.[0]?.topic_name}>
+                  {t?.category?.[0]?.topic_name}
+                </option>
+              ))}
             </select>
 
-
-
-            <div className="flex justify-center">
-              <div className="bg-gray-200 p-1 rounded-full flex gap-1 shadow-inner">
-
-                {/* SIMPLE */}
-                <button
-                  onClick={() => handleSelect("simple")}
-                  className={`
-                        px-5 py-1 rounded-full text-sm font-medium transition-all
-                        ${mode === "simple"
-                      ? "bg-white shadow text-blue-600"
-                      : "text-gray-600"}
-                    `}
-                >
-                  Simple
-                </button>
-
-                {/* AI RECOMMENDED */}
-                <button
-                  onClick={() => handleSelect("ai")}
-                  className={`
-                        px-5 py-1 rounded-full text-sm font-medium transition-all
-                        ${mode === "ai"
-                      ? "bg-white shadow text-purple-600"
-                      : "text-gray-600"}
-                    `}
-                >
-                  AI Recommended
-                </button>
-
-              </div>
+            {/* Mode Toggle */}
+            <div className="bg-gray-200 p-1 rounded-full flex gap-1 shadow-inner">
+              <button
+                onClick={() => handleSelect("simple")}
+                className={`
+                  px-4 py-1 rounded-full text-xs font-medium transition-all
+                  ${mode === "simple"
+                    ? "bg-white shadow text-green-600"
+                    : "text-gray-600"}
+                `}
+              >
+                Simple
+              </button>
+              <button
+                onClick={() => handleSelect("ai")}
+                className={`
+                  px-4 py-1 rounded-full text-xs font-medium transition-all
+                  ${mode === "ai"
+                    ? "bg-white shadow text-green-600"
+                    : "text-gray-600"}
+                `}
+              >
+                AI Recommended
+              </button>
             </div>
-
           </div>
         </div>
         <div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 ">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {quizs?.length > 0 ?
               quizs?.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="relative bg-white shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl p-6
-            "
+                  className="relative bg-white shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 rounded-xl p-4"
                 >
-
                   {/* QUIZ HEADER */}
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-md font-bold text-gray-900">
+                  <div className="flex justify-between items-start mb-3">
+                    <h2 className="text-sm font-bold text-gray-900 flex-1 pr-2 line-clamp-2">
                       {quiz.title}
                     </h2>
-
                     <span
-                      className={`px-4 py-.5 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
+                      className={`px-2.5 py-0.5 rounded-full text-xs text-white font-semibold shadow-sm flex-shrink-0 ${quiz.difficulty === "easy"
                         ? "bg-green-600"
                         : quiz.difficulty === "medium"
                           ? "bg-yellow-600"
@@ -693,53 +695,43 @@ const UserPage = () => {
                   </div>
 
                   {/* CATEGORY INFO */}
-                  <div className="text-gray-700 mb-5">
-                    <p>
-                      <span className="font-semibold text-sm">Category:</span>{" "}
+                  <div className="text-gray-600 mb-4 space-y-1 text-xs">
+                    <p className="truncate">
+                      <span className="font-semibold">Category:</span>{" "}
                       {quiz.category?.[0]?.category_name}
                     </p>
-
-                    <p>
-                      <span className="font-semibold text-sm">Topic:</span>{" "}
+                    <p className="truncate">
+                      <span className="font-semibold">Topic:</span>{" "}
                       {quiz.category?.[0]?.topic_name}
                     </p>
                   </div>
 
                   {/*Action BUTTON */}
-                  <div className=" flex gap-2">
-                    {
-                      quiz.isAttempted === true ?
-                        <button className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
-                          onClick={() => reAttemptQuizFunction(quiz.id)}
-                        >
-                          Re-Attempt
-                        </button>
-                        : ""
-                    }
+                  <div className="flex gap-2">
+                    {quiz.isAttempted === true && (
+                      <button 
+                        className="flex-1 py-1.5 bg-white hover:bg-gray-50 text-green-500 border border-green-500 rounded-lg font-semibold text-xs transition-all shadow-sm"
+                        onClick={() => reAttemptQuizFunction(quiz.id)}
+                      >
+                        Re-Attempt
+                      </button>
+                    )}
                     <button
-                      className="w-full mt-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md"
+                      className={`${quiz.isAttempted ? 'flex-1' : 'w-full'} py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-xs transition-all shadow-sm`}
                       onClick={() => { playQuizFunction(quiz); setSelectedQuiz(quiz) }}
                     >
-                      ▶ Play Quiz
+                      ▶ Play
                     </button>
-
                   </div>
-
-
-
                 </div>
-
-
-
               ))
-
-              : <h1 className="text-red-500">
-                No Data Found
-              </h1>
+              : <div className="col-span-full text-center py-8">
+                  <h1 className="text-red-500 text-sm font-medium">No Data Found</h1>
+                </div>
             }
           </div>
 
-          <div className="fixed bottom-6 right-6 z-50">
+          <div className="fixed bottom-6 right-6 z-40">
             <Pagination
               currentPage={page}
               totalPages={totalPages}
@@ -765,144 +757,106 @@ const UserPage = () => {
 
       {/* quize play modal  */}
       {modalPlayQuiz && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex justify-center items-center z-50">
-
-          <div className="bg-white w-11/12 max-w-xl rounded-2xl p-6 shadow-xl
-                    animate-fadeIn max-h-[80vh] overflow-auto">
-
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-3 animate-fadeIn">
+          <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl relative max-h-[92vh] flex flex-col">
             {/* Header */}
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Play Quiz</h2>
-
-              {/* Current Question / Total */}
-              <div className="text-sm font-semibold bg-gray-100 px-3 py-1 rounded-lg">
-                {currentIndex + 1}/{selectedQuiz?.questions?.length}
-              </div>
-
-              {/* default time  */}
-
-              <div className="text-right text-md font-bold">
-                ⏱ {formatTime(timePassed)}
-              </div>
-
-              {/* for one vs one quize real time fetch in db  */}
-              {timeLeft !== null && (
-                <div className="text-right text-md font-bold text-black">
-                  Time Left:
-                  {Math.floor(timeLeft / 60)}:
-                  {String(timeLeft % 60).padStart(2, "0")}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-bold text-gray-900">Play Quiz</h2>
+                <div className="text-xs font-semibold bg-gray-100 px-2.5 py-1 rounded">
+                  {currentIndex + 1}/{selectedQuiz?.questions?.length}
                 </div>
-              )}
-
-
-
-
-              <button
-                onClick={() => { setModalPlayQuiz(false); setSelectedOption(null); setCurrentIndex(0); handleSubmitQuiz() }}
-                className="text-xl font-bold hover:text-red-600 transition"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Current Question */}
-            <div className="mt-3 space-y-4">
-
-              <p className="font-semibold text-lg">
-                {currentIndex + 1}.{" "}
-                {selectedQuiz?.questions?.[currentIndex]?.question_text}
-              </p>
-
-              {/* Options */}
-              <div className="space-y-2">
-                {["option_1", "option_2", "option_3", "option_4"]
-                  .filter((opt) => selectedQuiz?.questions?.[currentIndex]?.[opt])
-                  .map((opt, idx) => {
-                    const value =
-                      selectedQuiz?.questions?.[currentIndex]?.[opt];
-
-                    const questionId = selectedQuiz?.questions?.[currentIndex]?.id;
-
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => selectedAnswer(opt, idx, questionId)}
-                        className={`border p-3 rounded-lg cursor-pointer transition 
-                    ${selectedOption === opt
-                            ? "bg-green-100 border-green-600"
-                            : "hover:bg-gray-100"
-                          }`}
-                      >
-                        <span className="font-semibold mr-2">
-                          {["A", "B", "C", "D"][idx]}.
-                        </span>
-                        {value}
-                      </div>
-                    );
-                  })}
               </div>
-
+              
+              <div className="flex items-center gap-3">
+                {timeLeft !== null ? (
+                  <div className="text-xs font-bold text-red-600">
+                    Time: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                  </div>
+                ) : (
+                  <div className="text-xs font-semibold text-gray-600">
+                    ⏱ {formatTime(timePassed)}
+                  </div>
+                )}
+                <button
+                  onClick={() => { setModalPlayQuiz(false); setSelectedOption(null); setCurrentIndex(0); handleSubmitQuiz() }}
+                  className="w-7 h-7 rounded hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="mt-6 flex justify-between">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {/* Current Question */}
+              <div className="space-y-3">
+                <p className="font-semibold text-sm text-gray-900">
+                  {currentIndex + 1}. {selectedQuiz?.questions?.[currentIndex]?.question_text}
+                </p>
 
-              {/* Prev Button */}
+                {/* Options */}
+                <div className="space-y-2">
+                  {["option_1", "option_2", "option_3", "option_4"]
+                    .filter((opt) => selectedQuiz?.questions?.[currentIndex]?.[opt])
+                    .map((opt, idx) => {
+                      const value = selectedQuiz?.questions?.[currentIndex]?.[opt];
+                      const questionId = selectedQuiz?.questions?.[currentIndex]?.id;
+
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => selectedAnswer(opt, idx, questionId)}
+                          className={`border p-2.5 rounded-lg cursor-pointer transition text-xs
+                            ${selectedOption === opt
+                              ? "bg-green-50 border-green-600"
+                              : "hover:bg-gray-50 border-gray-300"
+                            }`}
+                        >
+                          <span className="font-semibold mr-2 text-gray-700">
+                            {["A", "B", "C", "D"][idx]}.
+                          </span>
+                          <span className="text-gray-800">{value}</span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-2 px-5 py-3 border-t border-gray-200">
               <button
                 disabled={currentIndex === 0}
                 onClick={() => {
                   setCurrentIndex((prev) => prev - 1);
                   setSelectedOption(null);
                 }}
-                className={`px-4 py-2 rounded-lg border transition
-            ${currentIndex === 0
-                    ? "opacity-40 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                  }`}
+                className={`px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                Prev
+                Previous
               </button>
 
-              {/* Save & Next Button for one vs one  */}
-              <button
-                // onClick={() => playOneVsOneModal === true ? submitOneVsOneQuiz() :submitPlayQuiz() }
-                onClick={() => playOneVsOneModal === true ? submitOneVsOneQuiz() : submitOneVsOneQuiz()}
+              {currentIndex !== selectedQuiz?.questions?.length - 1 && (
+                <button
+                  disabled={!selectedOption}
+                  onClick={() => {
+                    handleSubmitQuiz();
+                    setIsRunning(false);
+                  }}
+                  className={`flex-1 px-3 py-2 text-xs font-semibold text-white bg-green-600 rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  Save Quiz
+                </button>
+              )}
 
-                className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
+              <button
+                onClick={() => playOneVsOneModal === true ? submitOneVsOneQuiz() : submitOneVsOneQuiz()}
+                className="flex-1 px-3 py-2 text-xs font-semibold text-white bg-green-600 rounded hover:bg-green-700 transition-colors"
               >
-                {currentIndex === selectedQuiz?.questions?.length - 1 ? "Submit socket io" : "Save & Next"}
-                {/* Save & Next */}
+                {currentIndex === selectedQuiz?.questions?.length - 1 ? "Submit" : "Next"}
               </button>
             </div>
-            {
-              currentIndex === selectedQuiz?.questions?.length - 1 ? "" :
-
-                <div className="flex w-full">
-                  <button
-                    disabled={!selectedOption}   // disable when no option selected
-                    onClick={() => {
-                      handleSubmitQuiz()
-                      setIsRunning(false);
-
-
-                      selectedOption
-                        ? ""
-                        : "";
-                    }}
-                    className={`
-      relative mt-3 bg-green-600 w-full py-2 text-white text-xl rounded-md
-      ${!selectedOption
-                        ? "opacity-40 cursor-not-allowed group"
-                        : "hover:bg-green-700"
-                      }
-    `}
-                  >
-                    Save Quiz
-                  </button>
-                </div>
-
-            }
-
           </div>
         </div>
       )}
@@ -1212,196 +1166,210 @@ const UserPage = () => {
 
 
       {/* re-attempt-modal  */}
-      {reAttemptModal === true && reAttemptQuizeData ?
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
+      {reAttemptModal === true && reAttemptQuizeData ? (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md relative max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h1 className="text-base font-semibold text-gray-800">
+                Attempted Quiz Review
+              </h1>
+              <button
+                onClick={() => setReAttemptModal(false)}
+                className="w-7 h-7 rounded hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
 
-            {/* Close Button */}
-            <button
-              onClick={() => setReAttemptModal(false)}
-              className="absolute top-3 right-3 text-gray-600 hover:text-black"
-            >
-              ✕
-            </button>
-
-            <h1 className="text-xl font-semibold mb-4">
-              Attempted Quiz Review
-            </h1>
-
-            {/* Total Attempt */}
-            <div className="space-y-3">
-              <h4 className="font-medium">
-                Total Attempt: {reAttemptQuizeData.totalAttempt}
-              </h4>
-
-              {/* Attempt Buttons */}
-              <div className="flex flex-wrap gap-2">
-                {totalAttmpt.map((q, index) => (
-                  <button
-                    key={index}
-                    className="px-3 py-1 bg-green-500 text-white rounded-md"
-                    onClick={() => selectedReAttFunction(q, reAttemptQuizeData.quiz_id)}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-
-              {/* Score Overview */}
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between">
-                  <h2 className="text-lg font-semibold mb-2 cursor-pointer" onClick={() => setShowQuestionModal(false)}>Score Overview</h2>
-                  <h2 className="text-red-500 font-bold cursor-pointer" onClick={() => setShowQuestionModal(true)}>Show Questions</h2>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-5 py-3">
+              <div className="space-y-3">
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-700 mb-2">
+                    Total Attempt: {reAttemptQuizeData.totalAttempt}
+                  </h4>
+                  {/* Attempt Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    {totalAttmpt.map((q, index) => (
+                      <button
+                        key={index}
+                        className="px-2.5 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 transition"
+                        onClick={() => selectedReAttFunction(q, reAttemptQuizeData.quiz_id)}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {
-                  showQuestionModal === true ?
-                    <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                {/* Score Overview */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <h2 
+                      className="text-sm font-semibold text-gray-800 cursor-pointer hover:text-gray-600" 
+                      onClick={() => setShowQuestionModal(false)}
+                    >
+                      Score Overview
+                    </h2>
+                    <h2 
+                      className="text-xs font-semibold text-green-600 cursor-pointer hover:text-green-700" 
+                      onClick={() => setShowQuestionModal(true)}
+                    >
+                      Show Questions
+                    </h2>
+                  </div>
 
+                  {showQuestionModal === true ? (
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                       {reAttemptQuizeData.questions?.map((q, i) => {
                         const attempt = reAttemptQuizeData.quizAns?.find(
                           (a) => a.question_id === q.id
                         );
-
                         const userAns = attempt?.user_answer || null;
                         const correct = attempt?.correct_answer || q.correct_option;
 
                         return (
-                          <div key={q.id} className="border p-4 rounded-md space-y-2">
-                            <p className="font-medium">{i + 1}. {q.question_text}</p>
-
-                            {/* OPTIONS */}
+                          <div key={q.id} className="border border-gray-200 p-3 rounded-lg space-y-2">
+                            <p className="font-medium text-xs text-gray-900">{i + 1}. {q.question_text}</p>
                             <div className="space-y-1">
                               {["a", "b", "c", "d"].map((opt) => {
-                                const optionText =
-                                  q[`option_${opt === "a" ? 1 : opt === "b" ? 2 : opt === "c" ? 3 : 4}`];
-
+                                const optionText = q[`option_${opt === "a" ? 1 : opt === "b" ? 2 : opt === "c" ? 3 : 4}`];
                                 if (!optionText) return null;
-
                                 const isCorrect = opt === correct;
                                 const isUserWrong = userAns === opt && opt !== correct;
 
                                 return (
                                   <div
                                     key={opt}
-                                    className={`p-2 rounded-md 
-                  ${isCorrect ? "bg-green-200" : ""}
-                  ${isUserWrong ? "bg-red-200" : ""}
-                `}
+                                    className={`p-1.5 rounded text-xs
+                                      ${isCorrect ? "bg-green-50 border border-green-200" : ""}
+                                      ${isUserWrong ? "bg-red-50 border border-red-200" : "border border-gray-200"}
+                                    `}
                                   >
                                     {opt}) {optionText}
                                   </div>
                                 );
                               })}
                             </div>
-
-                            {/* ANSWER SUMMARY */}
-                            <div className="text-sm font-semibold">
-                              <p>Your Answer: {userAns ? userAns.toUpperCase() : "Not Attempted"}</p>
-                              <p>Correct Answer: {correct.toUpperCase()}</p>
+                            <div className="text-xs font-semibold space-y-0.5">
+                              <p className="text-gray-700">Your Answer: <span className={userAns === correct ? "text-green-600" : "text-red-600"}>{userAns ? userAns.toUpperCase() : "Not Attempted"}</span></p>
+                              <p className="text-gray-700">Correct Answer: <span className="text-green-600">{correct.toUpperCase()}</span></p>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-
-                    :
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-
-                      <div className="p-3 bg-gray-100 rounded-md">
-                        <p className="font-medium">Score</p>
-                        <p>{reAttemptQuizeData.score} / {reAttemptQuizeData.total_questions}</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="font-semibold text-gray-600 mb-1">Score</p>
+                        <p className="text-gray-800">{reAttemptQuizeData.score} / {reAttemptQuizeData.total_questions}</p>
                       </div>
-
-                      <div className="p-3 bg-gray-100 rounded-md">
-                        <p className="font-medium">Correct</p>
-                        <p>{reAttemptQuizeData.correct_answers}</p>
+                      <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="font-semibold text-gray-600 mb-1">Correct</p>
+                        <p className="text-gray-800">{reAttemptQuizeData.correct_answers}</p>
                       </div>
-
-                      <div className="p-3 bg-gray-100 rounded-md">
-                        <p className="font-medium">Wrong</p>
-                        <p>{reAttemptQuizeData.wrong_answers}</p>
+                      <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="font-semibold text-gray-600 mb-1">Wrong</p>
+                        <p className="text-gray-800">{reAttemptQuizeData.wrong_answers}</p>
                       </div>
-
-                      <div className="p-3 bg-gray-100 rounded-md">
-                        <p className="font-medium">Unattempted</p>
-                        <p>{reAttemptQuizeData.total_unattempted}</p>
+                      <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="font-semibold text-gray-600 mb-1">Unattempted</p>
+                        <p className="text-gray-800">{reAttemptQuizeData.total_unattempted}</p>
                       </div>
-
-                      <div className="p-3 bg-gray-100 rounded-md">
-                        <p className="font-medium">Accuracy</p>
-                        <p>{reAttemptQuizeData.accuracy}%</p>
+                      <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="font-semibold text-gray-600 mb-1">Accuracy</p>
+                        <p className="text-gray-800">{reAttemptQuizeData.accuracy}%</p>
                       </div>
-
-                      <div className="p-3 bg-gray-100 rounded-md">
-                        <p className="font-medium">Percentage</p>
-                        <p>{reAttemptQuizeData.percentage}%</p>
+                      <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="font-semibold text-gray-600 mb-1">Percentage</p>
+                        <p className="text-gray-800">{reAttemptQuizeData.percentage}%</p>
                       </div>
-
-                      <div className="p-3 bg-gray-100 rounded-md">
-                        <p className="font-medium">Rank</p>
-                        <p>{reAttemptQuizeData.rank}</p>
+                      <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="font-semibold text-gray-600 mb-1">Rank</p>
+                        <p className="text-gray-800">#{reAttemptQuizeData.rank}</p>
                       </div>
-
-                      <div className="p-3 bg-gray-100 rounded-md">
-                        <p className="font-medium">Time Taken</p>
-                        <p>{reAttemptQuizeData.time_taken}</p>
+                      <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="font-semibold text-gray-600 mb-1">Time Taken</p>
+                        <p className="text-gray-800">{reAttemptQuizeData.time_taken}</p>
                       </div>
-
                     </div>
-                }
-
+                  )}
+                </div>
               </div>
             </div>
-
           </div>
         </div>
-        : ""
-      }
+      ) : ""}
 
       {/* playOneVsOneModal  */}
       {playOneVsOneModal === true && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex h-full items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-4xl h-140 relative">
-
-            {/* Close Button */}
-            <button onClick={() => setPlayOneVsOneModal(false)} className="absolute top-3 right-3 text-gray-600 hover:text-black" > ✕ </button>
-
-            <div className="">
-              <h1 className="font-bold" >Play One V/s One </h1>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+          <div className="bg-white w-full max-w-5xl rounded-lg shadow-2xl relative max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">Play One V/s One</h2>
+              <button 
+                onClick={() => setPlayOneVsOneModal(false)} 
+                className="w-7 h-7 rounded hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="flex gap-2 justify-end items-center mt-3">
-              <select className="px-3 py-1 shadow-sm border border-gray-300  rounded-lg focus:outline-none w-40 focus:ring-2 focus:ring-blue-500" onChange={(e) => setSelectCat(e.target.value)} >
-                <option value="">Select Category</option>
-                {categoryTopic?.map((t) => (<option key={t.id} value={t.category_name}>{t.category_name}</option>))}
-              </select>
+            {/* Filters */}
+            <div className="px-5 py-3 border-b border-gray-200">
+              <div className="flex flex-wrap gap-2">
+                <select 
+                  className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white transition-all" 
+                  onChange={(e) => setSelectCat(e.target.value)}
+                >
+                  <option value="">Select Category</option>
+                  {categoryTopic?.map((t) => (
+                    <option key={t.id} value={t.category_name}>{t.category_name}</option>
+                  ))}
+                </select>
 
-              {/* Topic (data will come from loop) */}
-              <select className="px-3 py-1  shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black" onChange={(e) => setSelectedTopic(e.target.value)} >
-                <option value="">Select Topic</option>
-                {quizs?.length > 0 && quizs?.map((t) => (<option key={t.id} value={t?.category?.[0]?.topic_name}>   {t?.category?.[0]?.topic_name} </option>))}
-              </select>
+                <select 
+                  className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white transition-all" 
+                  onChange={(e) => setSelectedTopic(e.target.value)}
+                >
+                  <option value="">Select Topic</option>
+                  {quizs?.length > 0 && quizs?.map((t) => (
+                    <option key={t.id} value={t?.category?.[0]?.topic_name}>
+                      {t?.category?.[0]?.topic_name}
+                    </option>
+                  ))}
+                </select>
 
-              <select className="px-3 py-1  shadow-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" onChange={(e) => setSelectedDiff(e.target.value)} >
-                <option value="all">Select Difficulty</option>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-
+                <select 
+                  className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white transition-all" 
+                  onChange={(e) => setSelectedDiff(e.target.value)}
+                >
+                  <option value="all">Select Difficulty</option>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
             </div>
 
-            {/* quizes  */}{
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-auto  max-h-auto mt-8 overflow-auto scrollbar-hide ">
+            {/* Quiz Grid */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {quizs?.length > 0 ?
                   quizs?.map((quiz) => (
-                    <div key={quiz.id} className=" bg-white shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 rounded-xl p-2 h-40 max-h-50 " >
-
-                      <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-md font-bold text-gray-900"> {quiz.title} </h2>
+                    <div 
+                      key={quiz.id} 
+                      className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 rounded-xl p-3"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h2 className="text-xs font-bold text-gray-900 flex-1 pr-2 line-clamp-2">
+                          {quiz.title}
+                        </h2>
                         <span
-                          className={`px-4 py-.5 rounded-full text-sm text-white font-semibold shadow-md ${quiz.difficulty === "easy"
+                          className={`px-2 py-0.5 rounded-full text-[10px] text-white font-semibold flex-shrink-0 ${quiz.difficulty === "easy"
                             ? "bg-green-600"
                             : quiz.difficulty === "medium"
                               ? "bg-yellow-600"
@@ -1412,88 +1380,104 @@ const UserPage = () => {
                         </span>
                       </div>
 
-                      {/* CATEGORY INFO */}
-                      <div className="text-gray-700 mb-2">
-                        <p> <span className="font-semibold text-sm">Category:</span>{" "} {quiz.category?.[0]?.category_name} </p>
-                        <p> <span className="font-semibold text-sm">Topic:</span>{" "} {quiz.category?.[0]?.topic_name} </p>
+                      <div className="text-gray-600 mb-3 space-y-0.5 text-[10px]">
+                        <p className="truncate">
+                          <span className="font-semibold">Category:</span> {quiz.category?.[0]?.category_name}
+                        </p>
+                        <p className="truncate">
+                          <span className="font-semibold">Topic:</span> {quiz.category?.[0]?.topic_name}
+                        </p>
                       </div>
 
-                      {/*Action BUTTON */}
-                      <div className=" flex gap-2">
-                        <button className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-all shadow-md" onClick={() => joinQuizFunction(quiz)} > ▶ Play Quiz </button>
-                      </div>
+                      <button 
+                        className="w-full py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-xs transition-all shadow-sm" 
+                        onClick={() => joinQuizFunction(quiz)}
+                      >
+                        ▶ Play Quiz
+                      </button>
                     </div>
-                  )) : <h1 className="text-red-500"> No Data Found </h1>
+                  )) 
+                  : <div className="col-span-full text-center py-8">
+                      <h1 className="text-red-500 text-sm font-medium">No Data Found</h1>
+                    </div>
                 }
               </div>
-            }
-            {/* <button className="px-6 py-1 bg-green-500 text-white rounded-lg mt-4 mx-3" onClick={(}>Join</button> */}
+            </div>
           </div>
         </div>
-      )
-      }
+      )}
 
       {showWaitingModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl text-center">
-            <h2 className="text-lg font-semibold">Waiting for Opponent...</h2>
-            <p className="text-gray-600 mt-2">Searching for another players in this quiz</p>
-            <div className="loader mt-4" />
-            <button className="mt-4 bg-red-500 text-white px-4 py-2 rounded" onClick={() => setShowWaitingModal(false)} > Cancel </button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl text-center w-[90%] max-w-md">
+            <h2 className="text-base font-semibold text-gray-800 mb-2">Waiting for Opponent...</h2>
+            <p className="text-xs text-gray-600 mb-4">Searching for another player in this quiz</p>
+            <div className="w-10 h-10 border-4 border-gray-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <button 
+              className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition" 
+              onClick={() => setShowWaitingModal(false)}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
 
       {showTimeoutModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl text-center w-[90%] md:w-[350px]">
-            <h2 className="text-lg font-semibold">Opponent Not Found</h2>
-            <p className="text-gray-600 mt-2">No player joined your quiz section</p>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl text-center w-[90%] max-w-md">
+            <h2 className="text-base font-semibold text-gray-800 mb-2">Opponent Not Found</h2>
+            <p className="text-xs text-gray-600 mb-4">No player joined your quiz section</p>
             <div className="mt-4 flex flex-col gap-2">
-              <button onClick={tryAgain} className="bg-blue-600 text-white py-2 rounded" >Try Again</button>
-              <button onClick={() => { setShowTimeoutModal(false); setPlayOneVsOneModal(false) }} className="bg-blue-600 text-white py-2 rounded" > Attempt Later </button>
+              <button 
+                onClick={tryAgain} 
+                className="bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition"
+              >
+                Try Again
+              </button>
+              <button 
+                onClick={() => { setShowTimeoutModal(false); setPlayOneVsOneModal(false) }} 
+                className="bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition"
+              >
+                Attempt Later
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {liveAttemptModal === true && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-md relative">
-
-            {/* Close Button */}
             <button
               onClick={() => setLiveAttemptModal(false)}
-              className="absolute top-3 right-3 text-gray-600 hover:text-black"
+              className="absolute top-3 right-3 w-7 h-7 rounded hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-600"
             >
               ✕
             </button>
-
-            <div>
-              <h1>Attempt Live Quiz </h1>
-              <p>This feature are Comming Soon</p>
+            <div className="text-center">
+              <h1 className="text-base font-semibold text-gray-800 mb-2">Attempt Live Quiz</h1>
+              <p className="text-xs text-gray-600">This feature is coming soon</p>
             </div>
-
           </div>
-
         </div>
+      )}
 
-      )
-      }
-
-      {
-        waitResult && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-xl text-center">
-              <h2 className="text-lg font-semibold">Waiting for Result</h2>
-              <p className="text-gray-600 mt-2">Wait for another players submit this quiz</p>
-              <div className="loader mt-4" />
-              <button className="mt-4 bg-red-500 text-white px-4 py-2 rounded" onClick={() => setWaitResult(false)} > Cancel </button>
-            </div>
+      {waitResult && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl text-center w-[90%] max-w-md">
+            <h2 className="text-base font-semibold text-gray-800 mb-2">Waiting for Result</h2>
+            <p className="text-xs text-gray-600 mb-4">Wait for another player to submit this quiz</p>
+            <div className="w-10 h-10 border-4 border-gray-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <button 
+              className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition" 
+              onClick={() => setWaitResult(false)}
+            >
+              Cancel
+            </button>
           </div>
-
-        )
-      }
+        </div>
+      )}
 
       {showResult && results && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
@@ -1611,19 +1595,20 @@ const UserPage = () => {
         </div>
       )}
       {startChat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          {/* Modal Box */}
-          <div className="relative w-[90%] h-[100] bg-white rounded-lg shadow-lg">
-            {/* Close Button */}
-            <button
-              onClick={() => setStartChat(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-black text-xl"
-            >
-              ✕
-            </button>
-
-            {/* Chat Content */}
-            <Chatpage />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3">
+          <div className="relative w-full max-w-4xl bg-white rounded-lg shadow-2xl max-h-[92vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h2 className="text-base font-semibold text-gray-800">StudyBot</h2>
+              <button
+                onClick={() => setStartChat(false)}
+                className="w-7 h-7 rounded hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <Chatpage />
+            </div>
           </div>
         </div>
       )}
