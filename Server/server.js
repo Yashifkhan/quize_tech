@@ -24,7 +24,7 @@ OneVsOne(io)
 
 app.use('/api/v1', authRoute)
 app.use('/api/v1', quizeRoute)
-app.use('/api/v1/chat-with-doc',chatRoute)
+app.use('/api/v1/chat-with-doc', chatRoute)
 app.post('/api/v1/submit-oneVsone-quiz/:user_id', oneVsOneQuizeSubmit)
 
 server.listen(process.env.PORT || 8000, () => {

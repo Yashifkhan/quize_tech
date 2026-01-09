@@ -4,7 +4,7 @@ import { chatTestController, startChatController } from '../../controller/userCo
 const chatRoute = express.Router()
 const upload = multer({ dest: 'uploads/' });
 
-
 chatRoute.route('/start').post(upload.single('file'), startChatController);
 chatRoute.route('/simple-chat').post(chatTestController)
+
 export default chatRoute

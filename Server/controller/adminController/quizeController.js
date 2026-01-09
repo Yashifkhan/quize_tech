@@ -1355,7 +1355,6 @@ db.query(lastFiveQuizzesQuery, (err, lastFive) => {
 
 }
 
-
 // user interst topic not use and this value in aarray in future  
 
 // own write one by one step 
