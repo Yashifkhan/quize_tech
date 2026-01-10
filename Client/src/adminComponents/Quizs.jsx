@@ -8,11 +8,9 @@ const Quizs = ({ quizs ,fetchQuizs }) => {
     const [playQuiz, setPlayQuiz] = useState(null)
     const [editQuiz, setEditQuize] = useState(null)
     const [selectedQuiz, setSelectedQuiz] = useState(null)
-
     const toggleMenu = (id) => {
         setOpenMenuId(openMenuId === id ? null : id);
     };
-
 
     const updateQuestion = (index, field, value) => {
         setEditQuize((prev) => {

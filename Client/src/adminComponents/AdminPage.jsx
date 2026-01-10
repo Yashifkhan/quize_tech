@@ -16,7 +16,6 @@ const AdminPage = () => {
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0)
   const [quizs, setQuiz] = useState([])
   const [openProfile, setOpenProfile] = useState(false);
-
   const [activePage, setActivePage] = useState("quizzes");
   const [genrateQuizModal, setGenrateQuizModal] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -28,7 +27,6 @@ const AdminPage = () => {
   const [instructions, setInstructions] = useState("")
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
   const [selectedCategory, setSelectedCategory] = useState("");
   const [minutes, setMinutes] = useState("")
 
